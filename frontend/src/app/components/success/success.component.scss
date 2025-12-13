@@ -1,0 +1,36 @@
+.success-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 80vh;
+  padding: 2rem;
+}
+
+.success-card {
+  max-width: 500px;
+  text-align: center;
+  padding: 2rem;
+}
+
+.success-icon {
+  margin-bottom: 2rem;
+}
+
+.success-icon mat-icon {
+  font-size: 80px;
+  width: 80px;
+  height: 80px;
+  color: #4caf50;
+}
+
+mat-card-title {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+mat-card-content p {
+  font-size: 1.1rem;
+  color: #666;
+  margin: 1rem 0;
+}
+

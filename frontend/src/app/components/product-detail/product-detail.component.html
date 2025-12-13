@@ -1,0 +1,60 @@
+<div class="product-detail-dialog">
+  <div class="dialog-header">
+    <h2 mat-dialog-title>{{ product.name }}</h2>
+    <button mat-icon-button (click)="close()" class="close-button">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content>
+    <div class="product-content">
+      <div class="image-section">
+        <div class="image-carousel">
+          <button mat-icon-button class="nav-button prev" (click)="previousImage()" *ngIf="images.length > 1">
+            <mat-icon>chevron_left</mat-icon>
+          </button>
+          <img [src]="images[currentImageIndex]" [alt]="product.name" class="main-image">
+          <button mat-icon-button class="nav-button next" (click)="nextImage()" *ngIf="images.length > 1">
+            <mat-icon>chevron_right</mat-icon>
+          </button>
+        </div>
+        <div class="image-indicators" *ngIf="images.length > 1">
+          <span 
+            *ngFor="let img of images; let i = index"
+            class="indicator"
+            [class.active]="i === currentImageIndex"
+            (click)="goToImage(i)">
+          </span>
+        </div>
+      </div>
+
+      <div class="details-section">
+        <div class="category-badge" *ngIf="product.category_name">
+          <mat-icon>{{ product.category_icon }}</mat-icon>
+          <span>{{ product.category_name }}</span>
+        </div>
+        
+        <h3 class="price">R$ {{ product.price.toFixed(2) }}</h3>
+        
+        <p class="description">{{ product.description }}</p>
+        
+        <div class="stock-info" *ngIf="product.stock !== undefined">
+          <mat-icon>inventory</mat-icon>
+          <span>Estoque: {{ product.stock }} unidades</span>
+        </div>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions>
+    <button mat-raised-button (click)="close()">
+      <mat-icon>close</mat-icon>
+      Fechar
+    </button>
+    <button mat-raised-button color="primary" (click)="addToCart()">
+      <mat-icon>add_shopping_cart</mat-icon>
+      Adicionar ao Carrinho
+    </button>
+  </mat-dialog-actions>
+</div>
+

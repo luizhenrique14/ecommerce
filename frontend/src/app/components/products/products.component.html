@@ -1,0 +1,81 @@
+<mat-toolbar color="primary">
+  <span>Ecommerce</span>
+  <span class="spacer"></span>
+  <button mat-icon-button [matBadge]="cartItemsCount" matBadgeColor="accent" (click)="goToCart()" matTooltip="Ver Carrinho">
+    <mat-icon>shopping_cart</mat-icon>
+  </button>
+  <span class="user-info">{{ user?.name || user?.email }}</span>
+  <button mat-icon-button (click)="logout()" matTooltip="Sair">
+    <mat-icon>logout</mat-icon>
+  </button>
+</mat-toolbar>
+
+<div class="products-container">
+  <div class="products-header">
+    <h1>
+      <mat-icon>store</mat-icon>
+      {{ selectedCategory ? 'Produtos da Categoria' : 'Todos os Produtos' }}
+    </h1>
+    
+    <div class="filters-section">
+      <mat-form-field appearance="outline" class="sort-field">
+        <mat-label>Ordenar por</mat-label>
+        <mat-select [(ngModel)]="selectedSort" (selectionChange)="onSortChange()">
+          <mat-option *ngFor="let option of sortOptions" [value]="option.value">
+            {{ option.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Carregando produtos...</p>
+  </div>
+
+  <div *ngIf="!loading && products.length === 0" class="empty-state">
+    <mat-icon>inventory_2</mat-icon>
+    <p>Nenhum produto encontrado</p>
+  </div>
+
+  <div class="products-grid" *ngIf="!loading && products.length > 0">
+    <mat-card *ngFor="let product of products" class="product-card" (click)="openProductDetail(product)">
+      <div class="product-image-container">
+        <img [src]="getProductImage(product)" [alt]="product.name" class="product-image">
+        <div class="product-overlay">
+          <button mat-fab color="primary" (click)="openProductDetail(product); $event.stopPropagation()" matTooltip="Ver Detalhes">
+            <mat-icon>visibility</mat-icon>
+          </button>
+        </div>
+      </div>
+      <mat-card-header>
+        <mat-card-title>{{ product.name }}</mat-card-title>
+        <mat-card-subtitle *ngIf="product.category_name">
+          <mat-icon>{{ product.category_icon }}</mat-icon>
+          {{ product.category_name }}
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <p class="product-description">{{ product.description }}</p>
+        <p class="price">R$ {{ product.price.toFixed(2) }}</p>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-raised-button color="primary" (click)="addToCart(product); $event.stopPropagation()" class="add-cart-button">
+          <mat-icon>add_shopping_cart</mat-icon>
+          Adicionar ao Carrinho
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+
+  <mat-paginator
+    *ngIf="!loading && products.length > 0"
+    [length]="totalProducts"
+    [pageSize]="pageSize"
+    [pageSizeOptions]="[12, 24, 48]"
+    (page)="onPageChange($event)"
+    showFirstLastButtons
+    class="products-paginator">
+  </mat-paginator>
+</div>
