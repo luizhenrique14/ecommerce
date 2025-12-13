@@ -34,9 +34,30 @@ export class ProductDetailComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.images = this.product.images && this.product.images.length > 0 
+    const images = this.product.images && this.product.images.length > 0 
       ? this.product.images 
       : (this.product.image ? [this.product.image] : []);
+    this.images = images.map(img => this.getImagePath(img));
+  }
+
+  private getImagePath(imagePath?: string): string {
+    if (!imagePath) return '';
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    if (imagePath.includes('.')) {
+      const parts = imagePath.split('/');
+      const filename = parts.pop();
+      const path = parts.length ? parts.join('/') + '/' : '';
+      return `assets/img/${path}${encodeURIComponent(filename || '')}`;
+    }
+    return imagePath;
+  }
+
+  formatPrice(price: any): string {
+    const n = Number(price);
+    if (isNaN(n)) return '0.00';
+    return n.toFixed(2);
   }
 
   nextImage(): void {

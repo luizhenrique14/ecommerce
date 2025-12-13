@@ -204,13 +204,18 @@ async function initializeDatabase() {
     const [products] = await connection.query('SELECT COUNT(*) as count FROM products');
     if (products[0].count === 0) {
       await connection.query(`
-        INSERT INTO products (name, description, price, image) VALUES
-        ('Notebook', 'Notebook de alta performance com 16GB RAM e SSD 512GB', 2999.99, 'https://via.placeholder.com/300x200?text=Notebook'),
-        ('Smartphone', 'Smartphone com tela de 6.5 polegadas e câmera tripla', 1299.99, 'https://via.placeholder.com/300x200?text=Smartphone'),
-        ('Tablet', 'Tablet com tela de 10 polegadas e 128GB de armazenamento', 899.99, 'https://via.placeholder.com/300x200?text=Tablet'),
-        ('Fones de Ouvido', 'Fones de ouvido sem fio com cancelamento de ruído', 299.99, 'https://via.placeholder.com/300x200?text=Fones'),
-        ('Mouse Gamer', 'Mouse gamer com RGB e 12000 DPI', 199.99, 'https://via.placeholder.com/300x200?text=Mouse'),
-        ('Teclado Mecânico', 'Teclado mecânico com switches RGB', 399.99, 'https://via.placeholder.com/300x200?text=Teclado')
+        INSERT INTO products (name, description, price, image, category_id, images, stock) VALUES
+        ('Fone de Ouvido Premium', 'Fone de ouvido sem fio com cancelamento de ruído ativo', 299.99, 'fone2.webp', 1, JSON_ARRAY('fone2.webp', 'Fone3.webp'), 50),
+        ('iPhone 15 Pro', 'Smartphone de última geração com câmera avançada e processador A17', 4999.99, 'iphone 15.jpg', 2, JSON_ARRAY('iphone 15.jpg', 'iphone seila.jpg'), 30),
+        ('Laptop Gaming', 'Laptop de alta performance para jogos e edição com RTX 4090', 5999.99, 'laptop1.jpg', 3, JSON_ARRAY('laptop1.jpg', 'laptop2.avif', 'laptop3.jpg'), 15),
+        ('Mouse Gamer RGB', 'Mouse com 12000 DPI e iluminação RGB personalizável', 199.99, 'mouse1 2.jpg', 4, JSON_ARRAY('mouse1 2.jpg', 'mouse 2.webp'), 100),
+        ('Teclado Mecânico', 'Teclado mecânico com switches RGB e estrutura alumínio', 399.99, 'teclado.jpg', 5, JSON_ARRAY('teclado.jpg', 'teclado 2.jpg', 'teclado 3.jpg'), 45),
+        ('Capinha Protetora', 'Capinha resistente com proteção contra quedas', 79.99, 'Capinha 2.webp', 6, JSON_ARRAY('Capinha 2.webp'), 200),
+        ('Tablet 12 Polegadas', 'Tablet com tela AMOLED e S-Pen incluído', 2499.99, 'Tablet 1.jpg', 7, JSON_ARRAY('Tablet 1.jpg', 'Tablet 2.jpg'), 25),
+        ('Monitor 4K', 'Monitor 4K de 27 polegadas com taxa de 144Hz', 1799.99, 'Monito1.jpg', 8, JSON_ARRAY('Monito1.jpg', 'monito2.jpg'), 20),
+        ('Cabo USB-C', 'Cabo USB-C de 2 metros com carga rápida', 49.99, 'CAbo USB.webp', 9, JSON_ARRAY('CAbo USB.webp'), 300),
+        ('Carregador Rápido', 'Carregador 65W com múltiplas portas', 149.99, 'Carregador 1.avif', 10, JSON_ARRAY('Carregador 1.avif', 'CArregador2.webp'), 80),
+        ('Película Protetora', 'Película de vidro temperado com alta transparência', 29.99, '[elicula 1.jpg', 11, JSON_ARRAY('[elicula 1.jpg', 'pelicula 2.webp'), 500)
       `);
     }
 

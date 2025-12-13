@@ -49,7 +49,7 @@ export class SidenavComponent implements OnInit {
   }
 
   goHome(): void {
-    this.router.navigate(['/products']);
+    this.router.navigate(['/products'], { queryParams: {} });
     this.categorySelected.emit(null);
   }
 

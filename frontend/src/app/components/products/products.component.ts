@@ -82,7 +82,10 @@ export class ProductsComponent implements OnInit {
     this.route.queryParams.subscribe(params => {
       if (params['category']) {
         this.selectedCategory = parseInt(params['category']);
+      } else {
+        this.selectedCategory = null;
       }
+      this.page = 1;
       this.loadProducts();
     });
   }
@@ -151,8 +154,29 @@ export class ProductsComponent implements OnInit {
 
   getProductImage(product: Product): string {
     if (product.images && product.images.length > 0) {
-      return product.images[0];
+      return this.getImagePath(product.images[0]);
     }
-    return product.image || 'https://via.placeholder.com/300x200?text=Produto';
+    return this.getImagePath(product.image) || 'https://via.placeholder.com/300x200?text=Produto';
+  }
+
+  private getImagePath(imagePath?: string): string {
+    if (!imagePath) return '';
+    if (imagePath.startsWith('http')) {
+      return imagePath;
+    }
+    if (imagePath.includes('.')) {
+      // encode filename to handle spaces and special chars
+      const parts = imagePath.split('/');
+      const filename = parts.pop();
+      const path = parts.length ? parts.join('/') + '/' : '';
+      return `assets/img/${path}${encodeURIComponent(filename || '')}`;
+    }
+    return imagePath;
+  }
+
+  formatPrice(price: any): string {
+    const n = Number(price);
+    if (isNaN(n)) return '0.00';
+    return n.toFixed(2);
   }
 }

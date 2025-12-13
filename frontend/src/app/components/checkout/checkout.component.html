@@ -18,7 +18,7 @@
                   <div class="cart-item">
                     <div class="item-info">
                       <h3>{{ item.name }}</h3>
-                      <p>R$ {{ item.price.toFixed(2) }} cada</p>
+                      <p class="price">R$ {{ item.price.toFixed(2) }} cada</p>
                     </div>
                     <div class="item-actions">
                       <button mat-icon-button (click)="updateQuantity(item, -1)">
@@ -33,7 +33,7 @@
                       </button>
                     </div>
                     <div class="item-total">
-                      <strong>R$ {{ (item.price * item.quantity).toFixed(2) }}</strong>
+                      <strong class="price">R$ {{ (item.price * item.quantity).toFixed(2) }}</strong>
                     </div>
                   </div>
                   <mat-divider></mat-divider>
@@ -41,7 +41,7 @@
               </mat-list>
               <div class="cart-summary" *ngIf="cartItems.length > 0">
                 <p><strong>Total de itens: {{ getTotalItems() }}</strong></p>
-                <p class="total-price"><strong>Total: R$ {{ totalPrice.toFixed(2) }}</strong></p>
+                <p class="total-price"><strong class="price">Total: R$ {{ totalPrice.toFixed(2) }}</strong></p>
               </div>
             </mat-card-content>
           </mat-card>
