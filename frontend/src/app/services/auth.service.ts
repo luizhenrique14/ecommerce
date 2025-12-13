@@ -9,6 +9,12 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+}
+
 export interface LoginResponse {
   token: string;
   user: {
@@ -43,6 +49,29 @@ export class AuthService {
       );
   }
 
+  register(data: RegisterRequest): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${this.apiUrl}/auth/register`, data)
+      .pipe(
+        tap((response: LoginResponse) => {
+          localStorage.setItem(this.tokenKey, response.token);
+          localStorage.setItem(this.userKey, JSON.stringify(response.user));
+          this.isAuthenticatedSubject.next(true);
+        })
+      );
+  }
+
+  requestPasswordReset(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/auth/request-password-reset`, { email });
+  }
+
+  resetPassword(email: string, code: string, password: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${this.apiUrl}/auth/reset-password`, {
+      email,
+      code,
+      password
+    });
+  }
+
   logout(): void {
     localStorage.removeItem(this.tokenKey);
     localStorage.removeItem(this.userKey);
@@ -67,4 +96,5 @@ export class AuthService {
     return !!this.getToken();
   }
 }
+
 

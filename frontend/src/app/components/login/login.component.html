@@ -44,6 +44,15 @@
           <span *ngIf="loading">Entrando...</span>
         </button>
       </form>
+
+      <div class="auth-links">
+        <p>
+          Não tem uma conta? <a (click)="navigateToRegister()">Cadastre-se aqui</a>
+        </p>
+        <p>
+          Esqueceu a senha? <a (click)="navigateToResetPassword()">Recuperar senha</a>
+        </p>
+      </div>
     </mat-card-content>
   </mat-card>
 </div>

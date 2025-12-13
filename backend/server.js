@@ -185,6 +185,21 @@ async function initializeDatabase() {
       )
     `);
 
+    // Create password reset tokens table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS password_reset_tokens (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        token VARCHAR(255) UNIQUE NOT NULL,
+        expires_at TIMESTAMP NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        INDEX idx_token (token),
+        INDEX idx_expires_at (expires_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
     // Insert default products if table is empty
     const [products] = await connection.query('SELECT COUNT(*) as count FROM products');
     if (products[0].count === 0) {
@@ -385,6 +400,115 @@ app.post('/api/auth/login', async (req, res) => {
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ message: 'Erro ao fazer login' });
+  }
+});
+
+// Request password reset
+app.post('/api/auth/request-password-reset', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ message: 'Email é obrigatório' });
+    }
+
+    const connection = await pool.getConnection();
+
+    // Check if user exists
+    const [users] = await connection.query(
+      'SELECT id FROM users WHERE email = ?',
+      [email]
+    );
+
+    if (users.length === 0) {
+      connection.release();
+      return res.status(404).json({ message: 'Usuário não encontrado' });
+    }
+
+    const userId = users[0].id;
+
+    // Generate reset token
+    const resetToken = require('crypto').randomBytes(32).toString('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour from now
+
+    // Save reset token to database
+    await connection.query(
+      'INSERT INTO password_reset_tokens (user_id, email, token, expires_at) VALUES (?, ?, ?, ?)',
+      [userId, email, resetToken, expiresAt]
+    );
+
+    connection.release();
+
+    // In a real application, you would send an email here
+    // For now, we'll return the token (NOT RECOMMENDED FOR PRODUCTION)
+    console.log(`Password reset token for ${email}: ${resetToken}`);
+
+    res.json({
+      message: 'Código de reset enviado para seu email',
+      // IMPORTANT: Remove this in production! Only for testing
+      token: resetToken
+    });
+  } catch (error) {
+    console.error('Request password reset error:', error);
+    res.status(500).json({ message: 'Erro ao solicitar reset de senha' });
+  }
+});
+
+// Reset password
+app.post('/api/auth/reset-password', async (req, res) => {
+  try {
+    const { email, code, password } = req.body;
+
+    if (!email || !code || !password) {
+      return res.status(400).json({ message: 'Email, código e senha são obrigatórios' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Senha deve ter no mínimo 6 caracteres' });
+    }
+
+    const connection = await pool.getConnection();
+
+    // Find the reset token
+    const [tokens] = await connection.query(
+      'SELECT * FROM password_reset_tokens WHERE email = ? AND token = ? AND expires_at > NOW()',
+      [email, code]
+    );
+
+    if (tokens.length === 0) {
+      connection.release();
+      return res.status(400).json({ message: 'Código inválido ou expirado' });
+    }
+
+    const token = tokens[0];
+
+    // Hash the new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Update user password
+    await connection.query(
+      'UPDATE users SET password = ? WHERE id = ?',
+      [hashedPassword, token.user_id]
+    );
+
+    // Delete the used reset token
+    await connection.query(
+      'DELETE FROM password_reset_tokens WHERE id = ?',
+      [token.id]
+    );
+
+    // Delete any other reset tokens for this user
+    await connection.query(
+      'DELETE FROM password_reset_tokens WHERE user_id = ?',
+      [token.user_id]
+    );
+
+    connection.release();
+
+    res.json({ message: 'Senha redefinida com sucesso' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ message: 'Erro ao redefinir senha' });
   }
 });
 

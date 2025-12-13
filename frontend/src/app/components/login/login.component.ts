@@ -61,5 +61,13 @@ export class LoginComponent {
       });
     }
   }
+
+  navigateToRegister(): void {
+    this.router.navigate(['/register']);
+  }
+
+  navigateToResetPassword(): void {
+    this.router.navigate(['/reset-password']);
+  }
 }
 
