@@ -662,6 +662,43 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
   }
 });
 
+// Admin route to create products
+app.post('/admin/products', authenticateToken, async (req, res) => {
+  try {
+    const { name, description, price, image, category_id, stock } = req.body;
+
+    if (!name || !description || !price || !image || !category_id) {
+      return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
+    }
+
+    const connection = await pool.getConnection();
+
+    // Check if category exists
+    const [categories] = await connection.query(
+      'SELECT id FROM categories WHERE id = ?',
+      [category_id]
+    );
+
+    if (categories.length === 0) {
+      connection.release();
+      return res.status(400).json({ message: 'Categoria inválida' });
+    }
+
+    // Insert product
+    const [result] = await connection.query(
+      'INSERT INTO products (name, description, price, image, category_id, stock) VALUES (?, ?, ?, ?, ?, ?)',
+      [name, description, price, image, category_id, stock]
+    );
+
+    connection.release();
+
+    res.status(201).json({ message: 'Produto cadastrado com sucesso', productId: result.insertId });
+  } catch (error) {
+    console.error('Create product error:', error);
+    res.status(500).json({ message: 'Erro ao cadastrar produto' });
+  }
+});
+
 // Start server
 app.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);

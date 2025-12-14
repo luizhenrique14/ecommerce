@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatDividerModule } from '@angular/material/divider';
 import { ProductService, Category } from '../../services/product.service';
+import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-sidenav',
@@ -22,19 +23,23 @@ import { ProductService, Category } from '../../services/product.service';
     MatDividerModule
   ],
   templateUrl: './sidenav.component.html',
-  styleUrl: './sidenav.component.scss'
+  styleUrls: ['./sidenav.component.scss']
 })
 export class SidenavComponent implements OnInit {
   @Output() categorySelected = new EventEmitter<number | null>();
   categories: Category[] = [];
+  isAdmin = false;
 
   constructor(
     private productService: ProductService,
-    private router: Router
+    public router: Router,
+    private authService: AuthService
   ) {}
 
   ngOnInit(): void {
     this.loadCategories();
+    const user = this.authService.getUser();
+    this.isAdmin = !!(user && user.email === 'admin@example.com');
   }
 
   loadCategories(): void {

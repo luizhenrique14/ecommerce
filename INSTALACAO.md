@@ -90,7 +90,7 @@ O frontend estará rodando em `http://localhost:4200`
 2. Você será redirecionado para a tela de login
 3. Use as credenciais padrão:
    - **Email:** admin@example.com
-   - **Senha:** admin123
+   - **Senha:** Admin123
 
 ### 6. Estrutura de Telas
 

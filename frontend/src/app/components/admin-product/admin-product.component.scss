@@ -1,0 +1,14 @@
+.admin-product {
+  max-width: 600px;
+  margin: 1rem auto;
+  padding: 1rem;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.admin-product h2 { margin-bottom: 1rem; }
+.admin-product form div { margin-bottom: 0.75rem; }
+.admin-product label { display:block; font-weight:600; margin-bottom:0.25rem; }
+.admin-product input, .admin-product textarea { width:100%; padding:0.5rem; border:1px solid #ccc; border-radius:4px; }
+.admin-product button { padding:0.5rem 1rem; background:#007bff; color:#fff; border:none; border-radius:4px; cursor:pointer; }
+.admin-product button[disabled] { background:#999; cursor:not-allowed; }
