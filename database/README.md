@@ -1,62 +1,77 @@
-# Scripts de Banco de Dados
+# Scripts de Banco de Dados - Ecommerce
 
-Esta pasta contém os scripts SQL para criar e configurar o banco de dados do ecommerce.
+## Script Principal
 
-## Arquivos
+### `init.sql` - Script de Inicialização Completo
+**Use este script quando o banco estiver vazio ou para resetar tudo.**
 
-- `database.sql` - Script principal para criar todas as tabelas e dados iniciais
+Este script único faz tudo:
+- ✅ Cria o banco de dados `ecommerce_db`
+- ✅ Cria todas as tabelas necessárias
+- ✅ Adiciona colunas e constraints de forma segura
+- ✅ Insere categorias iniciais
+- ✅ Insere produtos com imagens corretas
+- ✅ Pode ser executado múltiplas vezes sem erros
 
-## Como Usar
-
-### Opção 1: MySQL Workbench
-
-1. Abra o MySQL Workbench
-2. Conecte-se ao servidor MySQL (porta 3308)
-3. Abra o arquivo `database.sql`
-4. Execute o script completo (Ctrl+Shift+Enter)
-
-### Opção 2: Linha de Comando MySQL
-
+**Como usar:**
 ```bash
-mysql -u admin -pAdmin123 -P 3308 < database.sql
+mysql -u root -p < database/init.sql
 ```
 
-### Opção 3: Copiar e Colar
+Ou copie e cole o conteúdo no seu cliente MySQL (Workbench, phpMyAdmin, etc.)
 
-1. Abra o arquivo `database.sql`
-2. Copie todo o conteúdo
-3. Cole no MySQL Workbench ou terminal MySQL
-4. Execute
+## Estrutura do Banco
 
-## Estrutura das Tabelas
-
-### users
-- Armazena os usuários do sistema
-- Campos: id, email, password, name, created_at
-
-### products
-- Armazena os produtos disponíveis
-- Campos: id, name, description, price, image, stock, created_at, updated_at
-
-### orders
-- Armazena os pedidos realizados
-- Campos: id, user_id, total, status, shipping_address, shipping_name, shipping_city, shipping_zip_code, shipping_phone, created_at, updated_at
-- Relacionamento: FOREIGN KEY com users
-
-### order_items
-- Armazena os itens de cada pedido
-- Campos: id, order_id, product_id, quantity, price, subtotal, created_at
-- Relacionamentos: FOREIGN KEY com orders e products
+### Tabelas Principais:
+- `users` - Usuários do sistema
+- `categories` - Categorias de produtos
+- `products` - Produtos do ecommerce
+- `orders` - Pedidos realizados
+- `order_items` - Itens de cada pedido
+- `password_reset_tokens` - Tokens para recuperação de senha
 
 ## Dados Iniciais
 
-O script já inclui:
-- 6 produtos iniciais
-- O usuário admin será criado automaticamente pelo backend na primeira execução
+### Categorias:
+- Fone
+- Smartphone
+- Laptop
+- Mouse
+- Teclados
+- Capinhas
+- Tablet
+- Monitor
+- Cabos e Acessórios
+- Carregadores
+- Películas
 
-## Credenciais Padrão
+### Produtos:
+11 produtos de exemplo, cada um com:
+- Nome e descrição
+- Preço
+- Imagem principal (`/assets/img/...`)
+- Múltiplas imagens (array JSON)
+- Categoria associada
+- Estoque
 
-Após executar o script e iniciar o backend, você pode fazer login com:
+### Usuário Admin:
+O usuário admin padrão será criado automaticamente pelo backend na primeira execução:
 - **Email:** admin@example.com
 - **Senha:** Admin123
 
+## Scripts Antigos (Arquivos de Referência)
+
+Os seguintes arquivos são mantidos apenas para referência:
+- `database.sql` - Script inicial básico
+- `database_v2.sql` - Versão com categorias
+- `database_v2_safe.sql` - Versão segura de atualização
+- `update_images.sql` - Script para atualizar apenas imagens
+
+**Recomendação:** Use apenas `init.sql` para inicialização completa.
+
+## Notas Importantes
+
+1. **Imagens:** As imagens devem estar na pasta `frontend/src/assets/img/`
+2. **Caminhos:** Os produtos usam caminhos `/assets/img/` que são resolvidos pelo Angular
+3. **Idempotência:** O script pode ser executado múltiplas vezes sem causar erros
+4. **Segurança:** Todas as verificações usam `IF NOT EXISTS` e `INFORMATION_SCHEMA`

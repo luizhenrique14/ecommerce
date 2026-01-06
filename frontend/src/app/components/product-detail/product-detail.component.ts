@@ -41,17 +41,17 @@ export class ProductDetailComponent implements OnInit {
   }
 
   private getImagePath(imagePath?: string): string {
-    if (!imagePath) return '';
-    if (imagePath.startsWith('http')) {
+    if (!imagePath) return '/assets/img/images.jpg';
+    // Se já começa com /assets ou http, retornar como está
+    if (imagePath.startsWith('/assets') || imagePath.startsWith('http')) {
       return imagePath;
     }
-    if (imagePath.includes('.')) {
-      const parts = imagePath.split('/');
-      const filename = parts.pop();
-      const path = parts.length ? parts.join('/') + '/' : '';
-      return `assets/img/${path}${encodeURIComponent(filename || '')}`;
+    // Se começa com assets (sem barra), adicionar barra
+    if (imagePath.startsWith('assets/')) {
+      return '/' + imagePath;
     }
-    return imagePath;
+    // Caso contrário, assumir que é apenas o nome do arquivo
+    return `/assets/img/${imagePath}`;
   }
 
   formatPrice(price: any): string {

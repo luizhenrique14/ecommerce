@@ -29,10 +29,7 @@ import { AuthService } from '../../services/auth.service';
 export class RegisterComponent {
   registerForm: FormGroup;
   errorMessage: string = '';
-  successMessage: string = '';
   loading: boolean = false;
-  hidePassword: boolean = true;
-  hideConfirmPassword: boolean = true;
 
   constructor(
     private fb: FormBuilder,
@@ -47,45 +44,39 @@ export class RegisterComponent {
     }, { validators: this.passwordMatchValidator });
   }
 
-  passwordMatchValidator(group: FormGroup): { [key: string]: any } | null {
-    const password = group.get('password')?.value;
-    const confirmPassword = group.get('confirmPassword')?.value;
-    return password === confirmPassword ? null : { passwordMismatch: true };
+  passwordMatchValidator(form: FormGroup) {
+    const password = form.get('password');
+    const confirmPassword = form.get('confirmPassword');
+    if (password && confirmPassword && password.value !== confirmPassword.value) {
+      confirmPassword.setErrors({ passwordMismatch: true });
+      return { passwordMismatch: true };
+    }
+    return null;
   }
 
   onSubmit(): void {
     if (this.registerForm.valid) {
       this.loading = true;
       this.errorMessage = '';
-      this.successMessage = '';
-
-      const { name, email, password } = this.registerForm.value;
-
-      this.authService.register({ name, email, password }).subscribe({
-        next: (response: any) => {
-          this.loading = false;
-          this.successMessage = 'Cadastro realizado com sucesso! Redirecionando para login...';
-          setTimeout(() => {
-            this.router.navigate(['/login']);
-          }, 2000);
+      
+      const { confirmPassword, ...registerData } = this.registerForm.value;
+      
+      this.authService.register(registerData).subscribe({
+        next: () => {
+          this.router.navigate(['/products']);
         },
         error: (error: any) => {
+          this.errorMessage = error.error?.message || 'Erro ao criar conta. Tente novamente.';
           this.loading = false;
-          this.errorMessage = error.error?.message || 'Erro ao registrar. Tente novamente.';
+        },
+        complete: () => {
+          this.loading = false;
         }
       });
     }
   }
 
-  togglePasswordVisibility(): void {
-    this.hidePassword = !this.hidePassword;
-  }
-
-  toggleConfirmPasswordVisibility(): void {
-    this.hideConfirmPassword = !this.hideConfirmPassword;
-  }
-
-  navigateToLogin(): void {
+  goToLogin(): void {
     this.router.navigate(['/login']);
   }
 }

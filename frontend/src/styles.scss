@@ -7,6 +7,8 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 .product-detail-dialog-container {
   .mat-mdc-dialog-container {
     padding: 0;
+    border-radius: 8px !important;
+    overflow: hidden !important;
   }
 }
 
@@ -33,4 +35,3 @@ body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
-

@@ -153,25 +153,39 @@ export class ProductsComponent implements OnInit {
   }
 
   getProductImage(product: Product): string {
+    let imgPath = '';
+    
     if (product.images && product.images.length > 0) {
-      return this.getImagePath(product.images[0]);
+      imgPath = product.images[0];
+    } else if (product.image) {
+      imgPath = product.image;
+    } else {
+      return '/assets/img/images.jpg'; // Imagem padrão
     }
-    return this.getImagePath(product.image) || 'https://via.placeholder.com/300x200?text=Produto';
+    
+    return this.getImagePath(imgPath);
   }
 
   private getImagePath(imagePath?: string): string {
-    if (!imagePath) return '';
-    if (imagePath.startsWith('http')) {
+    if (!imagePath) return '/assets/img/images.jpg';
+    
+    // Se já começa com /assets ou http, retornar como está
+    if (imagePath.startsWith('/assets') || imagePath.startsWith('http')) {
       return imagePath;
     }
-    if (imagePath.includes('.')) {
-      // encode filename to handle spaces and special chars
-      const parts = imagePath.split('/');
-      const filename = parts.pop();
-      const path = parts.length ? parts.join('/') + '/' : '';
-      return `assets/img/${path}${encodeURIComponent(filename || '')}`;
+    
+    // Se começa com assets (sem barra), adicionar barra
+    if (imagePath.startsWith('assets/')) {
+      return '/' + imagePath;
     }
-    return imagePath;
+    
+    // Se contém caminho completo do banco (com /assets/img/), usar como está mas garantir barra inicial
+    if (imagePath.includes('/assets/img/')) {
+      return imagePath.startsWith('/') ? imagePath : '/' + imagePath;
+    }
+    
+    // Caso contrário, assumir que é apenas o nome do arquivo ou caminho relativo
+    return `/assets/img/${imagePath}`;
   }
 
   formatPrice(price: any): string {
