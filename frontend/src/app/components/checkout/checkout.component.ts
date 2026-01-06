@@ -10,6 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatListModule } from '@angular/material/list';
 import { MatDividerModule } from '@angular/material/divider';
+import { MaskDirective } from './mask.directive';
 import { CartService, CartItem } from '../../services/cart.service';
 
 @Component({
@@ -25,7 +26,8 @@ import { CartService, CartItem } from '../../services/cart.service';
     MatInputModule,
     MatStepperModule,
     MatListModule,
-    MatDividerModule
+    MatDividerModule,
+    MaskDirective
   ],
   templateUrl: './checkout.component.html',
   styleUrl: './checkout.component.scss'
@@ -50,12 +52,12 @@ export class CheckoutComponent implements OnInit {
       name: [cachedShipping.name || '', Validators.required],
       address: [cachedShipping.address || '', Validators.required],
       city: [cachedShipping.city || '', Validators.required],
-      zipCode: [cachedShipping.zipCode || '', [Validators.required, Validators.pattern(/^\d{5}-?\d{3}$/)]],
-      phone: [cachedShipping.phone || '', [Validators.required, Validators.pattern(/^\d{10,11}$/)]]
+      zipCode: [cachedShipping.zipCode || '', [Validators.required, Validators.pattern(/^\d{5}-\d{3}$/)]],
+      phone: [cachedShipping.phone || '', [Validators.required, Validators.pattern(/^\(\d{2}\)\s?\d{4,5}-\d{4}$/)]]
     });
 
     this.paymentForm = this.fb.group({
-      cardNumber: [cachedPayment.cardNumber || '', [Validators.required, Validators.pattern(/^\d{4}\s?\d{4}\s?\d{4}\s?\d{4}$/)]],
+      cardNumber: [cachedPayment.cardNumber || '', [Validators.required, Validators.pattern(/^\d{4}\s\d{4}\s\d{4}\s\d{4}$/)]],
       cardName: [cachedPayment.cardName || '', Validators.required],
       expiryDate: [cachedPayment.expiryDate || '', [Validators.required, Validators.pattern(/^\d{2}\/\d{2}$/)]],
       cvv: [cachedPayment.cvv || '', [Validators.required, Validators.pattern(/^\d{3}$/)]]
