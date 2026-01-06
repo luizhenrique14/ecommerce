@@ -89,6 +89,11 @@ export class AuthService {
     return userStr ? JSON.parse(userStr) : null;
   }
 
+  isAdmin(): boolean {
+    const user = this.getUser();
+    return !!(user && (user.isAdmin === true || user.isAdmin === 1));
+  }
+
   isAuthenticated(): Observable<boolean> {
     return this.isAuthenticatedSubject.asObservable();
   }

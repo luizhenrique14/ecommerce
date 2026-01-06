@@ -279,6 +279,14 @@ const authenticateToken = async (req, res, next) => {
   }
 };
 
+// Middleware to verify admin access
+const requireAdmin = (req, res, next) => {
+  if (!req.user || !req.user.isAdmin) {
+    return res.status(403).json({ message: 'Acesso negado: administrador somente' });
+  }
+  next();
+};
+
 // Routes
 
 // Health check
@@ -672,17 +680,67 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
   }
 });
 
-// Admin route to create products
-app.post('/admin/products', authenticateToken, async (req, res) => {
-  try {
-    // Only admins allowed
-    if (!req.user || !req.user.isAdmin) {
-      return res.status(403).json({ message: 'Acesso negado: administrador somente' });
-    }
-    const { name, description, price, image, category_id, stock } = req.body;
+// ============================================================================
+// ADMIN ROUTES - Require authentication and admin role
+// ============================================================================
 
-    if (!name || !description || !price || !image || !category_id) {
-      return res.status(400).json({ message: 'Todos os campos são obrigatórios' });
+// Create category (Admin only)
+app.post('/api/categories', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { name, slug, icon } = req.body;
+
+    if (!name || !slug || !icon) {
+      return res.status(400).json({ message: 'Nome, slug e ícone são obrigatórios' });
+    }
+
+    const connection = await pool.getConnection();
+
+    // Check if slug already exists
+    const [existing] = await connection.query(
+      'SELECT id FROM categories WHERE slug = ?',
+      [slug]
+    );
+
+    if (existing.length > 0) {
+      connection.release();
+      return res.status(400).json({ message: 'Já existe uma categoria com este slug' });
+    }
+
+    // Insert category
+    const [result] = await connection.query(
+      'INSERT INTO categories (name, slug, icon) VALUES (?, ?, ?)',
+      [name, slug, icon]
+    );
+
+    connection.release();
+
+    res.status(201).json({ 
+      message: 'Categoria cadastrada com sucesso', 
+      category: {
+        id: result.insertId,
+        name,
+        slug,
+        icon
+      }
+    });
+  } catch (error) {
+    console.error('Create category error:', error);
+    res.status(500).json({ message: 'Erro ao cadastrar categoria' });
+  }
+});
+
+// Create product (Admin only)
+app.post('/api/products', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { name, description, price, image, images, category_id, stock } = req.body;
+
+    // Validation
+    if (!name || !description || price === undefined || !image || !category_id) {
+      return res.status(400).json({ message: 'Nome, descrição, preço, imagem e categoria são obrigatórios' });
+    }
+
+    if (isNaN(price) || parseFloat(price) < 0) {
+      return res.status(400).json({ message: 'Preço inválido' });
     }
 
     const connection = await pool.getConnection();
@@ -698,18 +756,82 @@ app.post('/admin/products', authenticateToken, async (req, res) => {
       return res.status(400).json({ message: 'Categoria inválida' });
     }
 
+    // Prepare images array
+    let imagesArray = [];
+    if (images && Array.isArray(images) && images.length > 0) {
+      imagesArray = images;
+    } else {
+      imagesArray = [image];
+    }
+
     // Insert product
     const [result] = await connection.query(
-      'INSERT INTO products (name, description, price, image, category_id, stock) VALUES (?, ?, ?, ?, ?, ?)',
-      [name, description, price, image, category_id, stock]
+      'INSERT INTO products (name, description, price, image, images, category_id, stock) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [name, description, parseFloat(price), image, JSON.stringify(imagesArray), category_id, stock || 0]
     );
+
+    // Get created product with category info
+    const [products] = await connection.query(`
+      SELECT p.*, c.name as category_name, c.slug as category_slug, c.icon as category_icon
+      FROM products p
+      LEFT JOIN categories c ON p.category_id = c.id
+      WHERE p.id = ?
+    `, [result.insertId]);
+
+    const product = products[0];
+    if (product.images) {
+      try {
+        product.images = JSON.parse(product.images);
+      } catch (e) {
+        product.images = product.image ? [product.image] : [];
+      }
+    } else {
+      product.images = product.image ? [product.image] : [];
+    }
 
     connection.release();
 
-    res.status(201).json({ message: 'Produto cadastrado com sucesso', productId: result.insertId });
+    res.status(201).json({ 
+      message: 'Produto cadastrado com sucesso', 
+      product 
+    });
   } catch (error) {
     console.error('Create product error:', error);
     res.status(500).json({ message: 'Erro ao cadastrar produto' });
+  }
+});
+
+// Delete product (Admin only)
+app.delete('/api/products/:id', authenticateToken, requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ message: 'ID do produto inválido' });
+    }
+
+    const connection = await pool.getConnection();
+
+    // Check if product exists
+    const [products] = await connection.query(
+      'SELECT id FROM products WHERE id = ?',
+      [id]
+    );
+
+    if (products.length === 0) {
+      connection.release();
+      return res.status(404).json({ message: 'Produto não encontrado' });
+    }
+
+    // Delete product
+    await connection.query('DELETE FROM products WHERE id = ?', [id]);
+
+    connection.release();
+
+    res.json({ message: 'Produto excluído com sucesso' });
+  } catch (error) {
+    console.error('Delete product error:', error);
+    res.status(500).json({ message: 'Erro ao excluir produto' });
   }
 });
 

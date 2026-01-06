@@ -11,9 +11,19 @@
         <mat-icon>home</mat-icon>
         <span>Home</span>
       </a>
+      <mat-divider *ngIf="isAdmin"></mat-divider>
+      <h3 mat-subheader *ngIf="isAdmin">Administração</h3>
       <a mat-list-item *ngIf="isAdmin" (click)="router.navigate(['/admin/products'])" class="nav-item admin-link">
         <mat-icon>admin_panel_settings</mat-icon>
-        <span>Admin - Produtos</span>
+        <span>Gerenciar Produtos</span>
+      </a>
+      <a mat-list-item *ngIf="isAdmin" (click)="router.navigate(['/admin/products/new'])" class="nav-item admin-link">
+        <mat-icon>add_box</mat-icon>
+        <span>Novo Produto</span>
+      </a>
+      <a mat-list-item *ngIf="isAdmin" (click)="router.navigate(['/admin/categories/new'])" class="nav-item admin-link">
+        <mat-icon>category</mat-icon>
+        <span>Nova Categoria</span>
       </a>
       <mat-divider></mat-divider>
       <h3 mat-subheader>Categorias</h3>

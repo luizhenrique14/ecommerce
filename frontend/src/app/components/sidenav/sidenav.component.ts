@@ -1,6 +1,6 @@
-import { Component, OnInit, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, OnDestroy, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
 import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,6 +9,8 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatDividerModule } from '@angular/material/divider';
 import { ProductService, Category } from '../../services/product.service';
 import { AuthService } from '../../services/auth.service';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-sidenav',
@@ -25,10 +27,11 @@ import { AuthService } from '../../services/auth.service';
   templateUrl: './sidenav.component.html',
   styleUrls: ['./sidenav.component.scss']
 })
-export class SidenavComponent implements OnInit {
+export class SidenavComponent implements OnInit, OnDestroy {
   @Output() categorySelected = new EventEmitter<number | null>();
   categories: Category[] = [];
   isAdmin = false;
+  private routerSubscription?: Subscription;
 
   constructor(
     private productService: ProductService,
@@ -38,8 +41,24 @@ export class SidenavComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadCategories();
-    const user = this.authService.getUser();
-    this.isAdmin = !!(user && (user.isAdmin === true || user.isAdmin === 1));
+    this.checkAdminStatus();
+    
+    // Listen to route changes to update admin status
+    this.routerSubscription = this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
+      this.checkAdminStatus();
+    });
+  }
+
+  ngOnDestroy(): void {
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+    }
+  }
+
+  checkAdminStatus(): void {
+    this.isAdmin = this.authService.isAdmin();
   }
 
   loadCategories(): void {

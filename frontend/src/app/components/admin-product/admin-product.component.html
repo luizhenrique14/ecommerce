@@ -1,26 +1,107 @@
-<div class="admin-product">
-  <h2>Cadastro de Produto</h2>
-  <form [formGroup]="productForm" (ngSubmit)="onSubmit()">
-    <div>
-      <label>Nome</label>
-      <input formControlName="name" />
-    </div>
+<div class="admin-product-container">
+  <mat-card class="admin-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>inventory_2</mat-icon>
+        Cadastro de Produto
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="productForm" (ngSubmit)="onSubmit()">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Nome do Produto</mat-label>
+          <input matInput formControlName="name" required>
+          <mat-icon matPrefix>label</mat-icon>
+          <mat-error *ngIf="productForm.get('name')?.hasError('required')">
+            Nome é obrigatório
+          </mat-error>
+          <mat-error *ngIf="productForm.get('name')?.hasError('minlength')">
+            Nome deve ter no mínimo 3 caracteres
+          </mat-error>
+        </mat-form-field>
 
-    <div>
-      <label>Descrição</label>
-      <textarea formControlName="description"></textarea>
-    </div>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Descrição</mat-label>
+          <textarea matInput formControlName="description" rows="4" required></textarea>
+          <mat-icon matPrefix>description</mat-icon>
+          <mat-error *ngIf="productForm.get('description')?.hasError('required')">
+            Descrição é obrigatória
+          </mat-error>
+          <mat-error *ngIf="productForm.get('description')?.hasError('minlength')">
+            Descrição deve ter no mínimo 10 caracteres
+          </mat-error>
+        </mat-form-field>
 
-    <div>
-      <label>Preço</label>
-      <input type="number" formControlName="price" />
-    </div>
+        <div class="form-row">
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Preço (R$)</mat-label>
+            <input matInput type="number" formControlName="price" step="0.01" min="0" required>
+            <mat-icon matPrefix>attach_money</mat-icon>
+            <mat-error *ngIf="productForm.get('price')?.hasError('required')">
+              Preço é obrigatório
+            </mat-error>
+            <mat-error *ngIf="productForm.get('price')?.hasError('min')">
+              Preço deve ser maior que zero
+            </mat-error>
+          </mat-form-field>
 
-    <div>
-      <label>URL da Imagem</label>
-      <input formControlName="imageUrl" />
-    </div>
+          <mat-form-field appearance="outline" class="half-width">
+            <mat-label>Estoque</mat-label>
+            <input matInput type="number" formControlName="stock" min="0" required>
+            <mat-icon matPrefix>inventory</mat-icon>
+            <mat-error *ngIf="productForm.get('stock')?.hasError('required')">
+              Estoque é obrigatório
+            </mat-error>
+            <mat-error *ngIf="productForm.get('stock')?.hasError('min')">
+              Estoque não pode ser negativo
+            </mat-error>
+          </mat-form-field>
+        </div>
 
-    <button type="submit" [disabled]="productForm.invalid">Salvar</button>
-  </form>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Categoria</mat-label>
+          <mat-select formControlName="category_id" required>
+            <mat-option *ngFor="let category of categories" [value]="category.id">
+              <mat-icon>{{ category.icon }}</mat-icon>
+              {{ category.name }}
+            </mat-option>
+          </mat-select>
+          <mat-icon matPrefix>category</mat-icon>
+          <mat-error *ngIf="productForm.get('category_id')?.hasError('required')">
+            Categoria é obrigatória
+          </mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Caminho da Imagem</mat-label>
+          <input matInput formControlName="image" placeholder="/assets/img/nome-imagem.jpg" required>
+          <mat-icon matPrefix>image</mat-icon>
+          <mat-hint>Coloque a imagem em frontend/src/assets/img/ e use o caminho /assets/img/nome-arquivo.extensao</mat-hint>
+          <mat-error *ngIf="productForm.get('image')?.hasError('required')">
+            Imagem é obrigatória
+          </mat-error>
+        </mat-form-field>
+
+        <div class="image-preview" *ngIf="imagePreview.length > 0">
+          <img [src]="imagePreview[0]" alt="Preview">
+        </div>
+
+        <div class="form-actions">
+          <button mat-raised-button type="button" (click)="goBack()">
+            <mat-icon>arrow_back</mat-icon>
+            Voltar
+          </button>
+          <button 
+            mat-raised-button 
+            color="primary" 
+            type="submit"
+            [disabled]="productForm.invalid || loading">
+            <mat-icon>save</mat-icon>
+            <span *ngIf="!loading">Salvar Produto</span>
+            <span *ngIf="loading">Salvando...</span>
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
 </div>

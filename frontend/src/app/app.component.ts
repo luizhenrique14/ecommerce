@@ -34,6 +34,6 @@ export class AppComponent implements OnInit {
   }
 
   private updateSidenavVisibility(url: string): void {
-    this.showSidenav = url.includes('/products') || url.includes('/checkout') || url.includes('/success');
+    this.showSidenav = url.includes('/products') || url.includes('/checkout') || url.includes('/success') || url.includes('/admin');
   }
 }
