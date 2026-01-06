@@ -83,5 +83,8 @@ mat-sidenav-content {
 }
 
 .content-wrapper {
-  padding: 0;
+  padding: 1.5rem 2%; /* lateral spacing de 2% para todas as telas pós-login */
+  box-sizing: border-box;
+  width: 100%;
+  min-height: calc(100vh - 64px);
 }
