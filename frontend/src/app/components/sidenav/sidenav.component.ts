@@ -9,11 +9,14 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
-import { ProductService, Category } from '../../services/product.service';
-import { AuthService } from '../../services/auth.service';
-import { CartService, CartItem } from '../../services/cart.service';
-import { Subscription } from 'rxjs';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 import { filter } from 'rxjs/operators';
+import { ProductService } from '../../services/product.service';
+import { AuthService } from '../../services/auth.service';
+import { CartService } from '../../services/cart.service';
+import { CartItem } from '../../models/cart.model';
+import { Category } from '../../models/product.model';
 
 @Component({
   selector: 'app-sidenav',
@@ -36,9 +39,8 @@ export class SidenavComponent implements OnInit, OnDestroy {
   @Output() categorySelected = new EventEmitter<number | null>();
   categories: Category[] = [];
   isAdmin = false;
-  cartItemsCount: number = 0;
-  private routerSubscription?: Subscription;
-  private cartSubscription?: Subscription;
+  cartItemsCount = 0;
+  private destroy$ = new Subject<void>();
 
   constructor(
     private productService: ProductService,
@@ -47,49 +49,51 @@ export class SidenavComponent implements OnInit, OnDestroy {
     private cartService: CartService
   ) {}
 
+  ngOnInit(): void {
+    this.loadCategories();
+    this.checkAdminStatus();
+    this.subscribeToCart();
+    this.subscribeToRouteChanges();
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   logout(): void {
     this.authService.logout();
   }
 
-  ngOnInit(): void {
-    this.loadCategories();
-    this.checkAdminStatus();
-    
-    // Subscribe to cart items
-    this.cartSubscription = this.cartService.cartItems$.subscribe((items: CartItem[]) => {
-      this.cartItemsCount = items.reduce((sum: number, item: CartItem) => sum + item.quantity, 0);
-    });
-    
-    // Listen to route changes to update admin status
-    this.routerSubscription = this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe(() => {
-      this.checkAdminStatus();
-    });
-  }
-
-  ngOnDestroy(): void {
-    if (this.routerSubscription) {
-      this.routerSubscription.unsubscribe();
-    }
-    if (this.cartSubscription) {
-      this.cartSubscription.unsubscribe();
-    }
-  }
-
-  checkAdminStatus(): void {
+  private checkAdminStatus(): void {
     this.isAdmin = this.authService.isAdmin();
   }
 
-  loadCategories(): void {
+  private loadCategories(): void {
     this.productService.getCategories().subscribe({
       next: (categories) => {
         this.categories = categories;
-      },
-      error: (error) => {
-        console.error('Error loading categories:', error);
       }
     });
+  }
+
+  private subscribeToCart(): void {
+    this.cartService.cartItems$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((items: CartItem[]) => {
+        this.cartItemsCount = items.reduce((sum, item) => sum + item.quantity, 0);
+      });
+  }
+
+  private subscribeToRouteChanges(): void {
+    this.router.events
+      .pipe(
+        filter(event => event instanceof NavigationEnd),
+        takeUntil(this.destroy$)
+      )
+      .subscribe(() => {
+        this.checkAdminStatus();
+      });
   }
 
   goHome(): void {
@@ -106,4 +110,3 @@ export class SidenavComponent implements OnInit, OnDestroy {
     this.router.navigate(['/checkout']);
   }
 }
-

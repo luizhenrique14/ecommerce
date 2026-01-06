@@ -2,29 +2,13 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AuthService } from './auth.service';
-import { Category } from './product.service';
-
-export interface CreateCategoryRequest {
-  name: string;
-  slug: string;
-  icon: string;
-}
-
-export interface CreateProductRequest {
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  images?: string[];
-  category_id: number;
-  stock?: number;
-}
+import { CreateCategoryRequest, CreateProductRequest } from '../models/product.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AdminService {
-  private apiUrl = 'http://localhost:3000/api';
+  private readonly API_URL = 'http://localhost:3000/api';
 
   constructor(
     private http: HttpClient,
@@ -39,16 +23,22 @@ export class AdminService {
     });
   }
 
-  createCategory(data: CreateCategoryRequest): Observable<any> {
-    return this.http.post(`${this.apiUrl}/categories`, data, { headers: this.getHeaders() });
+  createCategory(data: CreateCategoryRequest): Observable<unknown> {
+    return this.http.post(`${this.API_URL}/categories`, data, {
+      headers: this.getHeaders()
+    });
   }
 
-  createProduct(data: CreateProductRequest): Observable<any> {
-    return this.http.post(`${this.apiUrl}/products`, data, { headers: this.getHeaders() });
+  createProduct(data: CreateProductRequest): Observable<unknown> {
+    return this.http.post(`${this.API_URL}/products`, data, {
+      headers: this.getHeaders()
+    });
   }
 
-  deleteProduct(id: number): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/products/${id}`, { headers: this.getHeaders() });
+  deleteProduct(id: number): Observable<unknown> {
+    return this.http.delete(`${this.API_URL}/products/${id}`, {
+      headers: this.getHeaders()
+    });
   }
 }
 

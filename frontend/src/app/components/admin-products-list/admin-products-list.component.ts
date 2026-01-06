@@ -13,7 +13,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { ProductService, Product, Category } from '../../services/product.service';
+import { ProductService } from '../../services/product.service';
+import { Product, Category } from '../../models/product.model';
 import { AdminService } from '../../services/admin.service';
 import { debounceTime, distinctUntilChanged, startWith } from 'rxjs/operators';
 

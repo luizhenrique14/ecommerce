@@ -5,7 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
 import { CartService } from '../../services/cart.service';
-import { Product } from '../../services/product.service';
+import { Product } from '../../models/product.model';
 
 @Component({
   selector: 'app-product-detail',
@@ -37,7 +37,7 @@ export class ProductDetailComponent implements OnInit {
     const images = this.product.images && this.product.images.length > 0 
       ? this.product.images 
       : (this.product.image ? [this.product.image] : []);
-    this.images = images.map(img => this.getImagePath(img));
+    this.images = images.map((img: string) => this.getImagePath(img));
   }
 
   private getImagePath(imagePath?: string): string {

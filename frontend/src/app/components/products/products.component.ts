@@ -11,10 +11,13 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FormsModule } from '@angular/forms';
-import { Subscription } from 'rxjs';
-import { CartService, CartItem } from '../../services/cart.service';
-import { AuthService } from '../../services/auth.service';
-import { ProductService, Product } from '../../services/product.service';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { CartService } from '../../services/cart.service';
+import { CartItem } from '../../models/cart.model';
+import { ProductService } from '../../services/product.service';
+import { Product, SortOption, ProductParams } from '../../models/product.model';
+import { ProductCardComponent } from '../../shared/product-card/product-card.component';
 import { ProductDetailComponent } from '../product-detail/product-detail.component';
 
 @Component({
@@ -30,29 +33,29 @@ import { ProductDetailComponent } from '../product-detail/product-detail.compone
     MatPaginatorModule,
     MatSelectModule,
     MatFormFieldModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    ProductCardComponent
   ],
   templateUrl: './products.component.html',
   styleUrl: './products.component.scss'
 })
 export class ProductsComponent implements OnInit, OnDestroy {
   products: Product[] = [];
-  cartItemsCount: number = 0;
+  cartItemsCount = 0;
   loading = false;
-  private cartSubscription?: Subscription;
+  private destroy$ = new Subject<void>();
 
   // Pagination
   page = 1;
   pageSize = 12;
   totalProducts = 0;
-  totalPages = 0;
 
   // Filters
   selectedCategory: number | null = null;
   sortBy = 'name';
-  sortOrder = 'ASC';
+  sortOrder: 'ASC' | 'DESC' = 'ASC';
 
-  sortOptions = [
+  sortOptions: SortOption[] = [
     { value: 'name-ASC', label: 'Nome (A-Z)', sort: 'name', order: 'ASC' },
     { value: 'name-DESC', label: 'Nome (Z-A)', sort: 'name', order: 'DESC' },
     { value: 'price-ASC', label: 'Preço (menor para maior)', sort: 'price', order: 'ASC' },
@@ -62,7 +65,6 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   constructor(
     private cartService: CartService,
-    private authService: AuthService,
     private productService: ProductService,
     private router: Router,
     private route: ActivatedRoute,
@@ -70,32 +72,29 @@ export class ProductsComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
-    // Subscribe to cart items
-    this.cartSubscription = this.cartService.cartItems$.subscribe((items: CartItem[]) => {
-      this.cartItemsCount = items.reduce((sum: number, item: CartItem) => sum + item.quantity, 0);
-    });
+    this.cartService.cartItems$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((items: CartItem[]) => {
+        this.cartItemsCount = items.reduce((sum, item) => sum + item.quantity, 0);
+      });
 
-    // Check for category in query params
-    this.route.queryParams.subscribe(params => {
-      if (params['category']) {
-        this.selectedCategory = parseInt(params['category']);
-      } else {
-        this.selectedCategory = null;
-      }
-      this.page = 1;
-      this.loadProducts();
-    });
+    this.route.queryParams
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(params => {
+        this.selectedCategory = params['category'] ? parseInt(params['category']) : null;
+        this.page = 1;
+        this.loadProducts();
+      });
   }
 
   ngOnDestroy(): void {
-    if (this.cartSubscription) {
-      this.cartSubscription.unsubscribe();
-    }
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   loadProducts(): void {
     this.loading = true;
-    const params = {
+    const params: ProductParams = {
       category: this.selectedCategory || undefined,
       page: this.page,
       limit: this.pageSize,
@@ -107,11 +106,9 @@ export class ProductsComponent implements OnInit, OnDestroy {
       next: (response) => {
         this.products = response.products;
         this.totalProducts = response.pagination.total;
-        this.totalPages = response.pagination.totalPages;
         this.loading = false;
       },
-      error: (error) => {
-        console.error('Error loading products:', error);
+      error: () => {
         this.loading = false;
       }
     });
@@ -151,45 +148,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     this.router.navigate(['/checkout']);
   }
 
-  getProductImage(product: Product): string {
-    let imgPath = '';
-    
-    if (product.images && product.images.length > 0) {
-      imgPath = product.images[0];
-    } else if (product.image) {
-      imgPath = product.image;
-    } else {
-      return '/assets/img/images.jpg'; // Imagem padrão
-    }
-    
-    return this.getImagePath(imgPath);
-  }
-
-  private getImagePath(imagePath?: string): string {
-    if (!imagePath) return '/assets/img/images.jpg';
-    
-    // Se já começa com /assets ou http, retornar como está
-    if (imagePath.startsWith('/assets') || imagePath.startsWith('http')) {
-      return imagePath;
-    }
-    
-    // Se começa com assets (sem barra), adicionar barra
-    if (imagePath.startsWith('assets/')) {
-      return '/' + imagePath;
-    }
-    
-    // Se contém caminho completo do banco (com /assets/img/), usar como está mas garantir barra inicial
-    if (imagePath.includes('/assets/img/')) {
-      return imagePath.startsWith('/') ? imagePath : '/' + imagePath;
-    }
-    
-    // Caso contrário, assumir que é apenas o nome do arquivo ou caminho relativo
-    return `/assets/img/${imagePath}`;
-  }
-
-  formatPrice(price: any): string {
-    const n = Number(price);
-    if (isNaN(n)) return '0.00';
-    return n.toFixed(2);
+  get pageTitle(): string {
+    return this.selectedCategory ? 'Produtos da Categoria' : 'Todos os Produtos';
   }
 }

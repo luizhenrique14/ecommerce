@@ -1,0 +1,4 @@
+<app-sidenav *ngIf="showSidenav">
+  <router-outlet></router-outlet>
+</app-sidenav>
+<router-outlet *ngIf="!showSidenav"></router-outlet>

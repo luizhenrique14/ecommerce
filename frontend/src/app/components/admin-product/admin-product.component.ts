@@ -10,7 +10,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { AdminService } from '../../services/admin.service';
-import { ProductService, Category } from '../../services/product.service';
+import { ProductService } from '../../services/product.service';
+import { Category } from '../../models/product.model';
 
 @Component({
   selector: 'app-admin-product',

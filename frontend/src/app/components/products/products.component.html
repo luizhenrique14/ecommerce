@@ -2,7 +2,7 @@
   <div class="products-header">
     <h1>
       <mat-icon>store</mat-icon>
-      {{ selectedCategory ? 'Produtos da Categoria' : 'Todos os Produtos' }}
+      {{ pageTitle }}
     </h1>
     
     <div class="filters-section">
@@ -28,33 +28,12 @@
   </div>
 
   <div class="products-grid" *ngIf="!loading && products.length > 0">
-    <mat-card *ngFor="let product of products" class="product-card" (click)="openProductDetail(product)">
-      <div class="product-image-container">
-        <img [src]="getProductImage(product)" [alt]="product.name" class="product-image">
-        <div class="product-overlay">
-          <button mat-fab color="primary" (click)="openProductDetail(product); $event.stopPropagation()" matTooltip="Ver Detalhes">
-            <mat-icon>visibility</mat-icon>
-          </button>
-        </div>
-      </div>
-      <mat-card-header>
-        <mat-card-title>{{ product.name }}</mat-card-title>
-        <mat-card-subtitle *ngIf="product.category_name">
-          <mat-icon>{{ product.category_icon }}</mat-icon>
-          {{ product.category_name }}
-        </mat-card-subtitle>
-      </mat-card-header>
-      <mat-card-content>
-        <p class="product-description">{{ product.description }}</p>
-        <p class="price">R$ {{ formatPrice(product.price) }}</p>
-      </mat-card-content>
-      <mat-card-actions>
-        <button mat-raised-button color="primary" (click)="addToCart(product); $event.stopPropagation()" class="add-cart-button">
-          <mat-icon>add_shopping_cart</mat-icon>
-          Adicionar ao Carrinho
-        </button>
-      </mat-card-actions>
-    </mat-card>
+    <app-product-card
+      *ngFor="let product of products"
+      [product]="product"
+      (addToCart)="addToCart($event)"
+      (viewDetails)="openProductDetail($event)">
+    </app-product-card>
   </div>
 
   <mat-paginator

@@ -1,0 +1,30 @@
+<mat-card class="product-card" (click)="onCardClick()">
+  <div class="image-container">
+    <img [src]="getProductImage(product)" [alt]="product.name" class="product-image">
+    <div class="overlay" *ngIf="showOverlay">
+      <button mat-fab color="primary" (click)="onViewDetails($event)" matTooltip="Ver Detalhes">
+        <mat-icon>visibility</mat-icon>
+      </button>
+    </div>
+  </div>
+  
+  <mat-card-header>
+    <mat-card-title class="product-title">{{ product.name }}</mat-card-title>
+    <mat-card-subtitle *ngIf="product.category_name" class="category">
+      <mat-icon>{{ product.category_icon }}</mat-icon>
+      {{ product.category_name }}
+    </mat-card-subtitle>
+  </mat-card-header>
+  
+  <mat-card-content>
+    <p class="description">{{ product.description }}</p>
+    <p class="price">R$ {{ formatPrice(product.price) }}</p>
+  </mat-card-content>
+  
+  <mat-card-actions>
+    <button mat-raised-button color="primary" (click)="onAddToCart($event)" class="add-button">
+      <mat-icon>add_shopping_cart</mat-icon>
+      Adicionar
+    </button>
+  </mat-card-actions>
+</mat-card>

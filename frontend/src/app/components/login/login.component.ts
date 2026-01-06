@@ -28,8 +28,8 @@ import { AuthService } from '../../services/auth.service';
 })
 export class LoginComponent {
   loginForm: FormGroup;
-  errorMessage: string = '';
-  loading: boolean = false;
+  errorMessage = '';
+  loading = false;
 
   constructor(
     private fb: FormBuilder,
@@ -51,8 +51,8 @@ export class LoginComponent {
         next: () => {
           this.router.navigate(['/products']);
         },
-        error: (error: any) => {
-          this.errorMessage = error.error?.message || 'Erro ao fazer login. Verifique suas credenciais.';
+        error: (error) => {
+          this.errorMessage = error.error?.message || 'Erro ao fazer login';
           this.loading = false;
         },
         complete: () => {
@@ -70,4 +70,3 @@ export class LoginComponent {
     this.router.navigate(['/reset-password']);
   }
 }
-

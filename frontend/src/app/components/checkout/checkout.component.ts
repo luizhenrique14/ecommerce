@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -10,8 +10,12 @@ import { MatInputModule } from '@angular/material/input';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatListModule } from '@angular/material/list';
 import { MatDividerModule } from '@angular/material/divider';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { CartService } from '../../services/cart.service';
+import { CartItem } from '../../models/cart.model';
+import { formatPrice } from '../../shared/utils';
 import { MaskDirective } from './mask.directive';
-import { CartService, CartItem } from '../../services/cart.service';
 
 @Component({
   selector: 'app-checkout',
@@ -32,21 +36,22 @@ import { CartService, CartItem } from '../../services/cart.service';
   templateUrl: './checkout.component.html',
   styleUrl: './checkout.component.scss'
 })
-export class CheckoutComponent implements OnInit {
+export class CheckoutComponent implements OnInit, OnDestroy {
   cartItems: CartItem[] = [];
-  totalPrice: number = 0;
-  
+  totalPrice = 0;
+  formatPrice = formatPrice;
+
   shippingForm: FormGroup;
   paymentForm: FormGroup;
+  private destroy$ = new Subject<void>();
 
   constructor(
     private cartService: CartService,
     private fb: FormBuilder,
     private router: Router
   ) {
-    // Load cached form data
-    const cachedShipping = this.loadCachedFormData('checkout_shipping');
-    const cachedPayment = this.loadCachedFormData('checkout_payment');
+    const cachedShipping = this.loadCachedFormData<{name?: string; address?: string; city?: string; zipCode?: string; phone?: string}>('checkout_shipping');
+    const cachedPayment = this.loadCachedFormData<{cardNumber?: string; cardName?: string; expiryDate?: string; cvv?: string}>('checkout_payment');
 
     this.shippingForm = this.fb.group({
       name: [cachedShipping.name || '', Validators.required],
@@ -63,33 +68,39 @@ export class CheckoutComponent implements OnInit {
       cvv: [cachedPayment.cvv || '', [Validators.required, Validators.pattern(/^\d{3}$/)]]
     });
 
-    // Save form data on changes
-    this.shippingForm.valueChanges.subscribe(() => {
-      this.saveCachedFormData('checkout_shipping', this.shippingForm.value);
-    });
+    this.shippingForm.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.saveCachedFormData('checkout_shipping', this.shippingForm.value));
 
-    this.paymentForm.valueChanges.subscribe(() => {
-      this.saveCachedFormData('checkout_payment', this.paymentForm.value);
-    });
+    this.paymentForm.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.saveCachedFormData('checkout_payment', this.paymentForm.value));
   }
 
   ngOnInit(): void {
-    this.cartService.cartItems$.subscribe((items: CartItem[]) => {
-      this.cartItems = items;
-      this.totalPrice = this.cartService.getTotalPrice();
-    });
+    this.cartService.cartItems$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((items: CartItem[]) => {
+        this.cartItems = items;
+        this.totalPrice = this.cartService.getTotalPrice();
+      });
   }
 
-  private loadCachedFormData(key: string): any {
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  private loadCachedFormData<T>(key: string): T {
     try {
       const cached = localStorage.getItem(key);
-      return cached ? JSON.parse(cached) : {};
-    } catch (e) {
-      return {};
+      return cached ? JSON.parse(cached) : {} as T;
+    } catch {
+      return {} as T;
     }
   }
 
-  private saveCachedFormData(key: string, data: any): void {
+  private saveCachedFormData(key: string, data: unknown): void {
     try {
       localStorage.setItem(key, JSON.stringify(data));
     } catch (e) {
@@ -108,11 +119,9 @@ export class CheckoutComponent implements OnInit {
 
   finalizePayment(): void {
     if (this.shippingForm.valid && this.paymentForm.valid) {
-      // Clear cached form data after successful payment
       localStorage.removeItem('checkout_shipping');
       localStorage.removeItem('checkout_payment');
       
-      // Simular processamento de pagamento
       setTimeout(() => {
         this.cartService.clearCart();
         this.router.navigate(['/success']);
@@ -123,11 +132,4 @@ export class CheckoutComponent implements OnInit {
   getTotalItems(): number {
     return this.cartItems.reduce((sum, item) => sum + item.quantity, 0);
   }
-
-  formatPrice(price: any): string {
-    const n = Number(price);
-    if (isNaN(n)) return '0.00';
-    return n.toFixed(2);
-  }
 }
-
