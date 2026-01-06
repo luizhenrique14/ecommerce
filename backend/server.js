@@ -96,6 +96,7 @@ async function initializeDatabase() {
         email VARCHAR(255) UNIQUE NOT NULL,
         password VARCHAR(255) NOT NULL,
         name VARCHAR(255) NOT NULL,
+        is_admin TINYINT(1) DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -134,6 +135,11 @@ async function initializeDatabase() {
     // Add columns if they don't exist (for existing databases)
     try {
       await connection.query('ALTER TABLE products ADD COLUMN category_id INT');
+    } catch (e) {
+      // Column already exists
+    }
+    try {
+      await connection.query("ALTER TABLE users ADD COLUMN is_admin TINYINT(1) DEFAULT 0");
     } catch (e) {
       // Column already exists
     }
@@ -228,8 +234,8 @@ async function initializeDatabase() {
       fetch('http://127.0.0.1:7242/ingest/d51c2716-d00b-49dd-bb59-98e7015290dd',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'server.js:150',message:'Creating admin user',data:{email:'admin@example.com',hashedPasswordLength:hashedPassword.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'I'})}).catch(()=>{});
       // #endregion
       await connection.query(`
-        INSERT INTO users (email, password, name) VALUES
-        ('admin@example.com', ?, 'Administrador')
+        INSERT INTO users (email, password, name, is_admin) VALUES
+        ('admin@example.com', ?, 'Administrador', 1)
       `, [hashedPassword]);
       // #region agent log
       console.log('Admin user created successfully');
@@ -387,9 +393,9 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ message: 'Credenciais inválidas' });
     }
 
-    // Generate token
+    // Generate token (include isAdmin)
     const token = jwt.sign(
-      { id: user.id, email: user.email, name: user.name },
+      { id: user.id, email: user.email, name: user.name, isAdmin: !!user.is_admin },
       JWT_SECRET,
       { expiresIn: '24h' }
     );
@@ -399,7 +405,8 @@ app.post('/api/auth/login', async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
-        name: user.name
+        name: user.name,
+        isAdmin: !!user.is_admin
       }
     });
   } catch (error) {
@@ -646,7 +653,7 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
   try {
     const connection = await pool.getConnection();
     const [users] = await connection.query(
-      'SELECT id, email, name, created_at FROM users WHERE id = ?',
+      'SELECT id, email, name, created_at, is_admin FROM users WHERE id = ?',
       [req.user.id]
     );
     connection.release();
@@ -655,7 +662,10 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
       return res.status(404).json({ message: 'Usuário não encontrado' });
     }
 
-    res.json(users[0]);
+    const user = users[0];
+    user.isAdmin = !!user.is_admin;
+    delete user.is_admin;
+    res.json(user);
   } catch (error) {
     console.error('Get profile error:', error);
     res.status(500).json({ message: 'Erro ao buscar perfil' });
@@ -665,6 +675,10 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
 // Admin route to create products
 app.post('/admin/products', authenticateToken, async (req, res) => {
   try {
+    // Only admins allowed
+    if (!req.user || !req.user.isAdmin) {
+      return res.status(403).json({ message: 'Acesso negado: administrador somente' });
+    }
     const { name, description, price, image, category_id, stock } = req.body;
 
     if (!name || !description || !price || !image || !category_id) {

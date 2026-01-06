@@ -39,7 +39,7 @@ export class SidenavComponent implements OnInit {
   ngOnInit(): void {
     this.loadCategories();
     const user = this.authService.getUser();
-    this.isAdmin = !!(user && user.email === 'admin@example.com');
+    this.isAdmin = !!(user && (user.isAdmin === true || user.isAdmin === 1));
   }
 
   loadCategories(): void {
