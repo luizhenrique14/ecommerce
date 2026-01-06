@@ -37,6 +37,19 @@
     </mat-nav-list>
   </mat-sidenav>
   <mat-sidenav-content>
-    <ng-content></ng-content>
+    <mat-toolbar color="primary" class="top-toolbar">
+      <span>Ecommerce</span>
+      <span class="spacer"></span>
+      <button mat-icon-button [matBadge]="cartItemsCount" matBadgeColor="accent" (click)="goToCart()" matTooltip="Ver Carrinho">
+        <mat-icon>shopping_cart</mat-icon>
+      </button>
+      <span class="user-info">{{ authService.getUser()?.name || authService.getUser()?.email }}</span>
+      <button mat-icon-button (click)="logout()" matTooltip="Sair">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </mat-toolbar>
+    <div class="content-wrapper">
+      <ng-content></ng-content>
+    </div>
   </mat-sidenav-content>
 </mat-sidenav-container>

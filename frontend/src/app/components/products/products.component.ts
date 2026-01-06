@@ -1,18 +1,17 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, ActivatedRoute } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatBadgeModule } from '@angular/material/badge';
-import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { CartService, CartItem } from '../../services/cart.service';
 import { AuthService } from '../../services/auth.service';
 import { ProductService, Product } from '../../services/product.service';
@@ -28,8 +27,6 @@ import { ProductDetailComponent } from '../product-detail/product-detail.compone
     MatButtonModule,
     MatIconModule,
     MatBadgeModule,
-    MatToolbarModule,
-    MatTooltipModule,
     MatPaginatorModule,
     MatSelectModule,
     MatFormFieldModule,
@@ -38,11 +35,11 @@ import { ProductDetailComponent } from '../product-detail/product-detail.compone
   templateUrl: './products.component.html',
   styleUrl: './products.component.scss'
 })
-export class ProductsComponent implements OnInit {
+export class ProductsComponent implements OnInit, OnDestroy {
   products: Product[] = [];
   cartItemsCount: number = 0;
-  user: any;
   loading = false;
+  private cartSubscription?: Subscription;
 
   // Pagination
   page = 1;
@@ -73,8 +70,8 @@ export class ProductsComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.user = this.authService.getUser();
-    this.cartService.cartItems$.subscribe((items: CartItem[]) => {
+    // Subscribe to cart items
+    this.cartSubscription = this.cartService.cartItems$.subscribe((items: CartItem[]) => {
       this.cartItemsCount = items.reduce((sum: number, item: CartItem) => sum + item.quantity, 0);
     });
 
@@ -88,6 +85,12 @@ export class ProductsComponent implements OnInit {
       this.page = 1;
       this.loadProducts();
     });
+  }
+
+  ngOnDestroy(): void {
+    if (this.cartSubscription) {
+      this.cartSubscription.unsubscribe();
+    }
   }
 
   loadProducts(): void {
@@ -146,10 +149,6 @@ export class ProductsComponent implements OnInit {
 
   goToCart(): void {
     this.router.navigate(['/checkout']);
-  }
-
-  logout(): void {
-    this.authService.logout();
   }
 
   getProductImage(product: Product): string {

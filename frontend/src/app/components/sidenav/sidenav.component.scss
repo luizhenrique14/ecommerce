@@ -66,3 +66,22 @@ mat-divider {
 mat-sidenav-content {
   padding: 0;
 }
+
+.top-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+.user-info {
+  margin-right: 1rem;
+  font-size: 0.875rem;
+}
+
+.content-wrapper {
+  padding: 0;
+}

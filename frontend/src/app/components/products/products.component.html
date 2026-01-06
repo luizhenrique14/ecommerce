@@ -1,15 +1,3 @@
-<mat-toolbar color="primary">
-  <span>Ecommerce</span>
-  <span class="spacer"></span>
-  <button mat-icon-button [matBadge]="cartItemsCount" matBadgeColor="accent" (click)="goToCart()" matTooltip="Ver Carrinho">
-    <mat-icon>shopping_cart</mat-icon>
-  </button>
-  <span class="user-info">{{ user?.name || user?.email }}</span>
-  <button mat-icon-button (click)="logout()" matTooltip="Sair">
-    <mat-icon>logout</mat-icon>
-  </button>
-</mat-toolbar>
-
 <div class="products-container">
   <div class="products-header">
     <h1>

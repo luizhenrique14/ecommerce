@@ -121,5 +121,11 @@ export class CheckoutComponent implements OnInit {
   getTotalItems(): number {
     return this.cartItems.reduce((sum, item) => sum + item.quantity, 0);
   }
+
+  formatPrice(price: any): string {
+    const n = Number(price);
+    if (isNaN(n)) return '0.00';
+    return n.toFixed(2);
+  }
 }
 

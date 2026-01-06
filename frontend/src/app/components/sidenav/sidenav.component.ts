@@ -6,9 +6,12 @@ import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatBadgeModule } from '@angular/material/badge';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDividerModule } from '@angular/material/divider';
 import { ProductService, Category } from '../../services/product.service';
 import { AuthService } from '../../services/auth.service';
+import { CartService, CartItem } from '../../services/cart.service';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 
@@ -22,6 +25,8 @@ import { filter } from 'rxjs/operators';
     MatIconModule,
     MatButtonModule,
     MatToolbarModule,
+    MatBadgeModule,
+    MatTooltipModule,
     MatDividerModule
   ],
   templateUrl: './sidenav.component.html',
@@ -31,17 +36,29 @@ export class SidenavComponent implements OnInit, OnDestroy {
   @Output() categorySelected = new EventEmitter<number | null>();
   categories: Category[] = [];
   isAdmin = false;
+  cartItemsCount: number = 0;
   private routerSubscription?: Subscription;
+  private cartSubscription?: Subscription;
 
   constructor(
     private productService: ProductService,
     public router: Router,
-    private authService: AuthService
+    public authService: AuthService,
+    private cartService: CartService
   ) {}
+
+  logout(): void {
+    this.authService.logout();
+  }
 
   ngOnInit(): void {
     this.loadCategories();
     this.checkAdminStatus();
+    
+    // Subscribe to cart items
+    this.cartSubscription = this.cartService.cartItems$.subscribe((items: CartItem[]) => {
+      this.cartItemsCount = items.reduce((sum: number, item: CartItem) => sum + item.quantity, 0);
+    });
     
     // Listen to route changes to update admin status
     this.routerSubscription = this.router.events.pipe(
@@ -54,6 +71,9 @@ export class SidenavComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     if (this.routerSubscription) {
       this.routerSubscription.unsubscribe();
+    }
+    if (this.cartSubscription) {
+      this.cartSubscription.unsubscribe();
     }
   }
 
@@ -80,6 +100,10 @@ export class SidenavComponent implements OnInit, OnDestroy {
   selectCategory(categoryId: number): void {
     this.router.navigate(['/products'], { queryParams: { category: categoryId } });
     this.categorySelected.emit(categoryId);
+  }
+
+  goToCart(): void {
+    this.router.navigate(['/checkout']);
   }
 }
 
