@@ -1,3 +1,5 @@
+const { logCreate, logDelete } = require('../../../shared/logger');
+
 // Product Controller
 class ProductController {
   constructor(listProducts, getProduct, createProduct, deleteProduct) {
@@ -28,6 +30,10 @@ class ProductController {
     if (result.error) {
       return res.status(result.status).json({ message: result.error });
     }
+    
+    // Log da criação do produto com o usuário que realizou a ação
+    logCreate(req, 'PRODUCT', req.body.name, { productId: result.product?.id });
+    
     return res.status(201).json(result);
   }
 
@@ -36,6 +42,10 @@ class ProductController {
     if (result.error) {
       return res.status(result.status).json({ message: result.error });
     }
+    
+    // Log da exclusão do produto com o usuário que realizou a ação
+    logDelete(req, 'PRODUCT', req.params.id);
+    
     return res.json({ message: result.message });
   }
 }

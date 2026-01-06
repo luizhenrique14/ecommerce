@@ -1,3 +1,5 @@
+const { logCreate } = require('../../../shared/logger');
+
 // Category Controller
 class CategoryController {
   constructor(listCategories, createCategory) {
@@ -15,6 +17,10 @@ class CategoryController {
     if (result.error) {
       return res.status(result.status).json({ message: result.error });
     }
+    
+    // Log da criação da categoria com o usuário que realizou a ação
+    logCreate(req, 'CATEGORY', req.body.name, { categoryId: result.category?.id });
+    
     return res.status(201).json(result);
   }
 }

@@ -9,6 +9,10 @@ const db = require('./adapters/database/pool');
 const UserRepositoryAdapter = require('./adapters/repositories/UserRepository');
 const ProductRepositoryAdapter = require('./adapters/repositories/ProductRepository');
 const CategoryRepositoryAdapter = require('./adapters/repositories/CategoryRepository');
+const LogRepository = require('./adapters/repositories/LogRepository');
+
+// Services
+const LoggerService = require('./application/services/LoggerService');
 
 // Use Cases
 const RegisterUser = require('./application/usecases/auth/RegisterUser');
@@ -36,6 +40,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-producti
 const userRepository = new UserRepositoryAdapter();
 const productRepository = new ProductRepositoryAdapter();
 const categoryRepository = new CategoryRepositoryAdapter();
+const logRepository = new LogRepository();
+
+// Initialize Logger Service
+const logger = new LoggerService(logRepository);
 
 // Initialize Use Cases
 const registerUser = new RegisterUser(userRepository, JWT_SECRET);
@@ -59,6 +67,10 @@ const userController = new UserController(userRepository);
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Logging Middleware (deve ser usado após bodyParser)
+const loggingMiddleware = require('./presentation/middlewares/loggingMiddleware');
+app.use(loggingMiddleware(logger));
 
 // Auth Middleware
 const authenticateToken = (req, res, next) => {
@@ -168,12 +180,37 @@ async function initializeDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
+    // Create API logs table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS api_logs (
+        id BIGINT AUTO_INCREMENT PRIMARY KEY,
+        action_type VARCHAR(100) NOT NULL,
+        message TEXT NOT NULL,
+        metadata JSON,
+        level VARCHAR(20) NOT NULL DEFAULT 'INFO',
+        status VARCHAR(20) NOT NULL DEFAULT 'SUCCESS',
+        ip_address VARCHAR(45),
+        user_id INT NULL,
+        user_email VARCHAR(255) NULL,
+        endpoint VARCHAR(500),
+        http_method VARCHAR(10),
+        response_time INT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_action_type (action_type),
+        INDEX idx_status (status),
+        INDEX idx_level (level),
+        INDEX idx_user_id (user_id),
+        INDEX idx_created_at (created_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
     // Add columns if they don't exist
     try { await connection.query('ALTER TABLE products ADD COLUMN category_id INT'); } catch (e) {}
     try { await connection.query("ALTER TABLE users ADD COLUMN is_admin TINYINT(1) DEFAULT 0"); } catch (e) {}
     try { await connection.query('ALTER TABLE products ADD COLUMN images JSON'); } catch (e) {}
     try { await connection.query('ALTER TABLE products ADD COLUMN stock INT DEFAULT 0'); } catch (e) {}
     try { await connection.query('ALTER TABLE products ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'); } catch (e) {}
+    try { await connection.query('ALTER TABLE api_logs ADD COLUMN user_email VARCHAR(255) NULL'); } catch (e) {}
 
     // Insert default categories
     const [categories] = await connection.query('SELECT COUNT(*) as count FROM categories');
