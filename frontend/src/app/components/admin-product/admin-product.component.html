@@ -72,18 +72,38 @@
           </mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Caminho da Imagem</mat-label>
-          <input matInput formControlName="image" placeholder="/assets/img/nome-imagem.jpg" required>
-          <mat-icon matPrefix>image</mat-icon>
-          <mat-hint>Coloque a imagem em frontend/src/assets/img/ e use o caminho /assets/img/nome-arquivo.extensao</mat-hint>
-          <mat-error *ngIf="productForm.get('image')?.hasError('required')">
-            Imagem é obrigatória
-          </mat-error>
-        </mat-form-field>
-
-        <div class="image-preview" *ngIf="imagePreview.length > 0">
-          <img [src]="imagePreview[0]" alt="Preview">
+        <!-- Upload de Imagem -->
+        <div class="image-upload-section">
+          <label class="upload-label">Imagem do Produto</label>
+          <div 
+            class="upload-area" 
+            [class.drag-over]="isDragging"
+            (dragover)="onDragOver($event)"
+            (dragleave)="onDragLeave($event)"
+            (drop)="onDrop($event)"
+            (click)="fileInput.click()">
+            <input 
+              #fileInput
+              type="file" 
+              accept="image/*" 
+              (change)="onFileSelected($event)"
+              style="display: none;">
+            <mat-icon class="upload-icon">cloud_upload</mat-icon>
+            <p class="upload-text">
+              <strong>Clique para selecionar</strong> ou arraste a imagem aqui
+            </p>
+            <p class="upload-hint">PNG, JPG, WEBP até 5MB</p>
+          </div>
+          
+          <div class="image-preview-container" *ngIf="selectedFile">
+            <div class="image-preview">
+              <img [src]="imagePreview" [alt]="selectedFile.name">
+              <button mat-icon-button class="remove-image" (click)="removeImage()" type="button">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+            <p class="file-name">{{ selectedFile.name }}</p>
+          </div>
         </div>
 
         <div class="form-actions">
@@ -95,7 +115,7 @@
             mat-raised-button 
             color="primary" 
             type="submit"
-            [disabled]="productForm.invalid || loading">
+            [disabled]="productForm.invalid || loading || !selectedFile">
             <mat-icon>save</mat-icon>
             <span *ngIf="!loading">Salvar Produto</span>
             <span *ngIf="loading">Salvando...</span>

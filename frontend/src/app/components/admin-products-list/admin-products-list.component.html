@@ -22,8 +22,60 @@
         </button>
       </div>
 
-      <div class="products-table-container" *ngIf="!loading && products.length > 0">
-        <table mat-table [dataSource]="products" class="products-table">
+      <!-- Filtros -->
+      <div class="filters-section">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Buscar Produto</mat-label>
+          <input 
+            matInput 
+            [formControl]="searchControl"
+            [matAutocomplete]="auto"
+            placeholder="Digite o nome do produto...">
+          <mat-icon matPrefix>search</mat-icon>
+          <mat-autocomplete 
+            #auto="matAutocomplete"
+            [displayWith]="displayProductName"
+            (optionSelected)="onProductSelected($event.option.value)">
+            <mat-option *ngFor="let product of filterProductsByName(searchControl.value)" [value]="product">
+              <span class="autocomplete-option">
+                <mat-icon>{{ product.category_icon }}</mat-icon>
+                <span>{{ product.name }}</span>
+              </span>
+            </mat-option>
+            <mat-option *ngIf="filterProductsByName(searchControl.value).length === 0 && searchControl.value && searchControl.value.trim() !== ''">
+              <span class="no-results">Nenhum produto encontrado</span>
+            </mat-option>
+          </mat-autocomplete>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="category-filter-field">
+          <mat-label>Filtrar por Categoria</mat-label>
+          <mat-select [formControl]="categoryFilterControl">
+            <mat-option [value]="null">Todas as categorias</mat-option>
+            <mat-option *ngFor="let category of categories" [value]="category.id">
+              <mat-icon>{{ category.icon }}</mat-icon>
+              {{ category.name }}
+            </mat-option>
+          </mat-select>
+          <mat-icon matPrefix>category</mat-icon>
+        </mat-form-field>
+
+        <button 
+          mat-raised-button 
+          *ngIf="searchControl.value || categoryFilterControl.value"
+          (click)="clearFilters()"
+          class="clear-filters-btn">
+          <mat-icon>clear</mat-icon>
+          Limpar Filtros
+        </button>
+      </div>
+
+      <div class="results-info" *ngIf="!loading">
+        <p>Mostrando {{ products.length }} de {{ allProducts.length }} produtos</p>
+      </div>
+
+      <div class="products-table-container" *ngIf="!loading && dataSource.data.length > 0">
+        <table mat-table [dataSource]="dataSource" class="products-table">
           <ng-container matColumnDef="id">
             <th mat-header-cell *matHeaderCellDef>ID</th>
             <td mat-cell *matCellDef="let product">{{ product.id }}</td>
@@ -37,14 +89,16 @@
           <ng-container matColumnDef="category">
             <th mat-header-cell *matHeaderCellDef>Categoria</th>
             <td mat-cell *matCellDef="let product">
-              <mat-icon>{{ product.category_icon }}</mat-icon>
-              {{ product.category_name || 'Sem categoria' }}
+              <span class="category-cell">
+                <mat-icon>{{ product.category_icon }}</mat-icon>
+                {{ product.category_name || 'Sem categoria' }}
+              </span>
             </td>
           </ng-container>
 
           <ng-container matColumnDef="price">
             <th mat-header-cell *matHeaderCellDef>Preço</th>
-            <td mat-cell *matCellDef="let product">R$ {{ product.price.toFixed(2) }}</td>
+            <td mat-cell *matCellDef="let product">R$ {{ formatPrice(product.price) }}</td>
           </ng-container>
 
           <ng-container matColumnDef="stock">
@@ -55,7 +109,12 @@
           <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef>Ações</th>
             <td mat-cell *matCellDef="let product">
-              <button mat-icon-button color="warn" (click)="deleteProduct(product)" matTooltip="Excluir">
+              <button 
+                mat-icon-button 
+                color="warn" 
+                (click)="deleteProduct(product)" 
+                [matTooltip]="'Excluir ' + product.name"
+                class="delete-button">
                 <mat-icon>delete</mat-icon>
               </button>
             </td>
@@ -66,7 +125,7 @@
         </table>
       </div>
 
-      <div class="empty-state" *ngIf="!loading && products.length === 0">
+      <div class="empty-state" *ngIf="!loading && dataSource.data.length === 0">
         <mat-icon>inventory_2</mat-icon>
         <p>Nenhum produto cadastrado</p>
         <button mat-raised-button color="primary" (click)="goToCreateProduct()">
@@ -82,4 +141,3 @@
     </mat-card-content>
   </mat-card>
 </div>
-

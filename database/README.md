@@ -1,8 +1,8 @@
 # Scripts de Banco de Dados - Ecommerce
 
-## Script Principal
+## Scripts Disponíveis
 
-### `init.sql` - Script de Inicialização Completo
+### `init.sql` - Script Principal de Inicialização
 **Use este script quando o banco estiver vazio ou para resetar tudo.**
 
 Este script único faz tudo:
@@ -18,12 +18,18 @@ Este script único faz tudo:
 mysql -u root -p < database/init.sql
 ```
 
-Ou copie e cole o conteúdo no seu cliente MySQL (Workbench, phpMyAdmin, etc.)
+### `fix_admin_user.sql` - Corrigir Usuário Admin
+**Use este script se o menu administrativo não aparecer.**
+
+Garante que o usuário admin tenha `is_admin = 1`:
+```bash
+mysql -u root -p < database/fix_admin_user.sql
+```
 
 ## Estrutura do Banco
 
 ### Tabelas Principais:
-- `users` - Usuários do sistema
+- `users` - Usuários do sistema (campo `is_admin` para administradores)
 - `categories` - Categorias de produtos
 - `products` - Produtos do ecommerce
 - `orders` - Pedidos realizados
@@ -32,46 +38,20 @@ Ou copie e cole o conteúdo no seu cliente MySQL (Workbench, phpMyAdmin, etc.)
 
 ## Dados Iniciais
 
-### Categorias:
-- Fone
-- Smartphone
-- Laptop
-- Mouse
-- Teclados
-- Capinhas
-- Tablet
-- Monitor
-- Cabos e Acessórios
-- Carregadores
-- Películas
-
-### Produtos:
-11 produtos de exemplo, cada um com:
-- Nome e descrição
-- Preço
-- Imagem principal (`/assets/img/...`)
-- Múltiplas imagens (array JSON)
-- Categoria associada
-- Estoque
-
-### Usuário Admin:
-O usuário admin padrão será criado automaticamente pelo backend na primeira execução:
+### Usuário Admin Padrão:
 - **Email:** admin@example.com
 - **Senha:** Admin123
+- **is_admin:** 1 (criado automaticamente pelo backend)
 
-## Scripts Antigos (Arquivos de Referência)
+### Categorias:
+11 categorias pré-cadastradas (Fone, Smartphone, Laptop, etc.)
 
-Os seguintes arquivos são mantidos apenas para referência:
-- `database.sql` - Script inicial básico
-- `database_v2.sql` - Versão com categorias
-- `database_v2_safe.sql` - Versão segura de atualização
-- `update_images.sql` - Script para atualizar apenas imagens
-
-**Recomendação:** Use apenas `init.sql` para inicialização completa.
+### Produtos:
+11 produtos de exemplo com imagens em `/assets/img/`
 
 ## Notas Importantes
 
 1. **Imagens:** As imagens devem estar na pasta `frontend/src/assets/img/`
 2. **Caminhos:** Os produtos usam caminhos `/assets/img/` que são resolvidos pelo Angular
-3. **Idempotência:** O script pode ser executado múltiplas vezes sem causar erros
+3. **Idempotência:** O script `init.sql` pode ser executado múltiplas vezes sem causar erros
 4. **Segurança:** Todas as verificações usam `IF NOT EXISTS` e `INFORMATION_SCHEMA`

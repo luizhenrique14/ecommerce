@@ -33,8 +33,9 @@ export class AdminProductComponent implements OnInit {
   productForm: FormGroup;
   categories: Category[] = [];
   loading = false;
-  imageFiles: File[] = [];
-  imagePreview: string[] = [];
+  selectedFile: File | null = null;
+  imagePreview: string = '';
+  isDragging = false;
 
   constructor(
     private fb: FormBuilder,
@@ -47,7 +48,6 @@ export class AdminProductComponent implements OnInit {
       name: ['', [Validators.required, Validators.minLength(3)]],
       description: ['', [Validators.required, Validators.minLength(10)]],
       price: ['', [Validators.required, Validators.min(0.01)]],
-      image: ['', Validators.required],
       category_id: ['', Validators.required],
       stock: [0, [Validators.required, Validators.min(0)]]
     });
@@ -71,25 +71,75 @@ export class AdminProductComponent implements OnInit {
     });
   }
 
-  onImageInput(event: any): void {
-    const file = event.target.files[0];
-    if (file) {
-      // Store file name - following the existing pattern
-      // Images are stored in frontend/src/assets/img/ and paths are saved as /assets/img/filename
-      const fileName = file.name;
-      this.productForm.patchValue({ image: `/assets/img/${fileName}` });
-      
-      // Preview
-      const reader = new FileReader();
-      reader.onload = (e: any) => {
-        this.imagePreview = [e.target.result];
-      };
-      reader.readAsDataURL(file);
+  onDragOver(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = true;
+  }
+
+  onDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = false;
+  }
+
+  onDrop(event: DragEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragging = false;
+
+    const files = event.dataTransfer?.files;
+    if (files && files.length > 0) {
+      this.processFile(files[0]);
     }
   }
 
+  onFileSelected(event: any): void {
+    const file = event.target.files[0];
+    if (file) {
+      this.processFile(file);
+    }
+  }
+
+  processFile(file: File): void {
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      this.snackBar.open('Por favor, selecione apenas arquivos de imagem', 'Fechar', {
+        duration: 3000
+      });
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      this.snackBar.open('A imagem deve ter no máximo 5MB', 'Fechar', {
+        duration: 3000
+      });
+      return;
+    }
+
+    this.selectedFile = file;
+    
+    // Generate preview
+    const reader = new FileReader();
+    reader.onload = (e: any) => {
+      this.imagePreview = e.target.result;
+    };
+    reader.readAsDataURL(file);
+
+    // Set image path in form (following existing pattern)
+    const fileName = file.name;
+    this.productForm.patchValue({ image: `/assets/img/${fileName}` });
+  }
+
+  removeImage(): void {
+    this.selectedFile = null;
+    this.imagePreview = '';
+    this.productForm.patchValue({ image: '' });
+  }
+
   onSubmit(): void {
-    if (this.productForm.valid) {
+    if (this.productForm.valid && this.selectedFile) {
       this.loading = true;
       
       const formValue = this.productForm.value;
@@ -97,21 +147,22 @@ export class AdminProductComponent implements OnInit {
         name: formValue.name,
         description: formValue.description,
         price: parseFloat(formValue.price),
-        image: formValue.image,
-        images: this.imagePreview.length > 0 ? [formValue.image] : [formValue.image],
+        image: `/assets/img/${this.selectedFile.name}`,
+        images: [`/assets/img/${this.selectedFile.name}`],
         category_id: parseInt(formValue.category_id),
         stock: parseInt(formValue.stock) || 0
       };
 
       this.adminService.createProduct(productData).subscribe({
         next: (response) => {
-          this.snackBar.open('Produto cadastrado com sucesso!', 'Fechar', {
-            duration: 3000,
+          this.snackBar.open('Produto cadastrado com sucesso! Lembre-se de colocar a imagem em frontend/src/assets/img/', 'Fechar', {
+            duration: 5000,
             horizontalPosition: 'end',
             verticalPosition: 'top'
           });
           this.productForm.reset();
-          this.imagePreview = [];
+          this.selectedFile = null;
+          this.imagePreview = '';
           this.loading = false;
         },
         error: (error) => {
