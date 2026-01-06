@@ -10,13 +10,14 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatDialog } from '@angular/material/dialog';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { FormsModule } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { CartService } from '../../services/cart.service';
 import { CartItem } from '../../models/cart.model';
 import { ProductService } from '../../services/product.service';
-import { Product, SortOption, ProductParams } from '../../models/product.model';
+import { Product, SortOption, ProductParams, Category } from '../../models/product.model';
 import { ProductCardComponent } from '../../shared/product-card/product-card.component';
 import { ProductDetailComponent } from '../product-detail/product-detail.component';
 
@@ -34,6 +35,7 @@ import { ProductDetailComponent } from '../product-detail/product-detail.compone
     MatSelectModule,
     MatFormFieldModule,
     MatProgressSpinnerModule,
+    MatSnackBarModule,
     ProductCardComponent
   ],
   templateUrl: './products.component.html',
@@ -43,6 +45,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   products: Product[] = [];
   cartItemsCount = 0;
   loading = false;
+  categories: Category[] = [];
   private destroy$ = new Subject<void>();
 
   // Pagination
@@ -52,6 +55,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   // Filters
   selectedCategory: number | null = null;
+  selectedCategoryName = 'Todos os Produtos';
   sortBy = 'name';
   sortOrder: 'ASC' | 'DESC' = 'ASC';
 
@@ -68,20 +72,31 @@ export class ProductsComponent implements OnInit, OnDestroy {
     private productService: ProductService,
     private router: Router,
     private route: ActivatedRoute,
-    private dialog: MatDialog
+    private dialog: MatDialog,
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
+    this.loadCategories();
     this.cartService.cartItems$
       .pipe(takeUntil(this.destroy$))
       .subscribe((items: CartItem[]) => {
         this.cartItemsCount = items.reduce((sum, item) => sum + item.quantity, 0);
       });
 
+    this.cartService.lastActionResult$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(result => {
+        if (result) {
+          this.showNotification(result.message, result.success ? 'success-snackbar' : 'error-snackbar');
+        }
+      });
+
     this.route.queryParams
       .pipe(takeUntil(this.destroy$))
       .subscribe(params => {
         this.selectedCategory = params['category'] ? parseInt(params['category']) : null;
+        this.updateCategoryName();
         this.page = 1;
         this.loadProducts();
       });
@@ -90,6 +105,24 @@ export class ProductsComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private loadCategories(): void {
+    this.productService.getCategories().subscribe({
+      next: (categories) => {
+        this.categories = categories;
+        this.updateCategoryName();
+      }
+    });
+  }
+
+  private updateCategoryName(): void {
+    if (this.selectedCategory) {
+      const category = this.categories.find(c => c.id === this.selectedCategory);
+      this.selectedCategoryName = category ? category.name : 'Produtos da Categoria';
+    } else {
+      this.selectedCategoryName = 'Todos os Produtos';
+    }
   }
 
   loadProducts(): void {
@@ -140,15 +173,24 @@ export class ProductsComponent implements OnInit, OnDestroy {
     });
   }
 
-  addToCart(product: Product): void {
-    this.cartService.addToCart(product);
+  addToCart(data: { product: Product; quantity: number }): void {
+    this.cartService.addToCart(data.product, data.quantity).subscribe();
   }
 
   goToCart(): void {
     this.router.navigate(['/checkout']);
   }
 
+  private showNotification(message: string, panelClass: string): void {
+    this.snackBar.open(message, 'Fechar', {
+      duration: 3000,
+      horizontalPosition: 'end',
+      verticalPosition: 'top',
+      panelClass: [panelClass]
+    });
+  }
+
   get pageTitle(): string {
-    return this.selectedCategory ? 'Produtos da Categoria' : 'Todos os Produtos';
+    return this.selectedCategoryName;
   }
 }

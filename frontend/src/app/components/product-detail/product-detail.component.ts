@@ -4,6 +4,7 @@ import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/materia
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatCardModule } from '@angular/material/card';
+import { FormsModule } from '@angular/forms';
 import { CartService } from '../../services/cart.service';
 import { Product } from '../../models/product.model';
 
@@ -15,7 +16,8 @@ import { Product } from '../../models/product.model';
     MatDialogModule,
     MatButtonModule,
     MatIconModule,
-    MatCardModule
+    MatCardModule,
+    FormsModule
   ],
   templateUrl: './product-detail.component.html',
   styleUrl: './product-detail.component.scss'
@@ -24,6 +26,7 @@ export class ProductDetailComponent implements OnInit {
   product: Product;
   currentImageIndex = 0;
   images: string[] = [];
+  quantity = 1;
 
   constructor(
     public dialogRef: MatDialogRef<ProductDetailComponent>,
@@ -42,15 +45,12 @@ export class ProductDetailComponent implements OnInit {
 
   private getImagePath(imagePath?: string): string {
     if (!imagePath) return '/assets/img/images.jpg';
-    // Se já começa com /assets ou http, retornar como está
     if (imagePath.startsWith('/assets') || imagePath.startsWith('http')) {
       return imagePath;
     }
-    // Se começa com assets (sem barra), adicionar barra
     if (imagePath.startsWith('assets/')) {
       return '/' + imagePath;
     }
-    // Caso contrário, assumir que é apenas o nome do arquivo
     return `/assets/img/${imagePath}`;
   }
 
@@ -76,9 +76,26 @@ export class ProductDetailComponent implements OnInit {
     this.currentImageIndex = index;
   }
 
+  incrementQuantity(): void {
+    this.quantity++;
+  }
+
+  decrementQuantity(): void {
+    if (this.quantity > 1) {
+      this.quantity--;
+    }
+  }
+
+  validateQuantity(): void {
+    if (this.quantity < 1 || !this.quantity) {
+      this.quantity = 1;
+    }
+  }
+
   addToCart(): void {
-    this.cartService.addToCart(this.product);
-    this.dialogRef.close();
+    this.cartService.addToCart(this.product, this.quantity).subscribe(() => {
+      this.dialogRef.close();
+    });
   }
 
   close(): void {

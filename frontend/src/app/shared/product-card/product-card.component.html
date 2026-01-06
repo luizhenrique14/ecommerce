@@ -1,7 +1,7 @@
 <mat-card class="product-card" (click)="onCardClick()">
   <div class="image-container">
     <img [src]="getProductImage(product)" [alt]="product.name" class="product-image">
-    <div class="overlay" *ngIf="showOverlay">
+    <div class="overlay" *ngIf="showOverlay && !showQuantityInput">
       <button mat-fab color="primary" (click)="onViewDetails($event)" matTooltip="Ver Detalhes">
         <mat-icon>visibility</mat-icon>
       </button>
@@ -22,9 +22,37 @@
   </mat-card-content>
   
   <mat-card-actions>
-    <button mat-raised-button color="primary" (click)="onAddToCart($event)" class="add-button">
-      <mat-icon>add_shopping_cart</mat-icon>
-      Adicionar
-    </button>
+    <ng-container *ngIf="!showQuantityInput">
+      <button mat-raised-button color="primary" (click)="onAddToCart($event)" class="add-button">
+        <mat-icon>add_shopping_cart</mat-icon>
+        Adicionar
+      </button>
+    </ng-container>
+    
+    <ng-container *ngIf="showQuantityInput">
+      <div class="quantity-controls">
+        <button mat-icon-button color="warn" (click)="cancelQuantity($event)" matTooltip="Cancelar">
+          <mat-icon>close</mat-icon>
+        </button>
+        <button mat-icon-button (click)="decrementQuantity()" [disabled]="quantity <= 1">
+          <mat-icon>remove</mat-icon>
+        </button>
+        <input 
+          type="number" 
+          class="quantity-input" 
+          [(ngModel)]="quantity" 
+          (ngModelChange)="validateQuantity()"
+          min="1"
+          (click)="$event.stopPropagation()"
+          (keydown.enter)="onAddToCart($event)">
+        <button mat-icon-button (click)="incrementQuantity()">
+          <mat-icon>add</mat-icon>
+        </button>
+        <button mat-raised-button color="accent" (click)="onAddToCart($event)" class="confirm-btn">
+          <mat-icon>check</mat-icon>
+          OK
+        </button>
+      </div>
+    </ng-container>
   </mat-card-actions>
 </mat-card>

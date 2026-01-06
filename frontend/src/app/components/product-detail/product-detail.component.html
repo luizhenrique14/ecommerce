@@ -42,6 +42,24 @@
           <mat-icon>inventory</mat-icon>
           <span>Estoque: {{ product.stock }} unidades</span>
         </div>
+
+        <div class="quantity-section">
+          <label>Quantidade:</label>
+          <div class="quantity-controls">
+            <button mat-icon-button (click)="decrementQuantity()" [disabled]="quantity <= 1">
+              <mat-icon>remove</mat-icon>
+            </button>
+            <input 
+              type="number" 
+              class="quantity-input" 
+              [(ngModel)]="quantity" 
+              (ngModelChange)="validateQuantity()"
+              min="1">
+            <button mat-icon-button (click)="incrementQuantity()">
+              <mat-icon>add</mat-icon>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </mat-dialog-content>

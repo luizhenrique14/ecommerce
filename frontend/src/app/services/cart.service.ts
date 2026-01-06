@@ -1,6 +1,11 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { CartItem } from '../models/cart.model';
+
+export interface CartResult {
+  success: boolean;
+  message: string;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -8,8 +13,10 @@ import { CartItem } from '../models/cart.model';
 export class CartService {
   private readonly CART_KEY = 'cart';
   private cartItemsSubject = new BehaviorSubject<CartItem[]>(this.loadFromStorage());
+  private lastActionResultSubject = new BehaviorSubject<CartResult | null>(null);
 
   cartItems$ = this.cartItemsSubject.asObservable();
+  lastActionResult$ = this.lastActionResultSubject.asObservable();
 
   constructor() {
     this.cartItems$.subscribe(items => {
@@ -17,16 +24,26 @@ export class CartService {
     });
   }
 
-  addToCart(product: Pick<CartItem, 'id' | 'name' | 'price' | 'image'>): void {
+  addToCart(product: Pick<CartItem, 'id' | 'name' | 'price' | 'image'>, quantity: number = 1): Observable<CartResult> {
+    if (quantity <= 0) {
+      const result: CartResult = { success: false, message: 'Quantidade inválida' };
+      this.lastActionResultSubject.next(result);
+      return of(result);
+    }
+
     const currentItems = this.cartItemsSubject.value;
     const existingItem = currentItems.find(item => item.id === product.id);
 
     if (existingItem) {
-      existingItem.quantity += 1;
+      existingItem.quantity += quantity;
       this.cartItemsSubject.next([...currentItems]);
     } else {
-      this.cartItemsSubject.next([...currentItems, { ...product, quantity: 1 }]);
+      this.cartItemsSubject.next([...currentItems, { ...product, quantity }]);
     }
+
+    const result: CartResult = { success: true, message: `${product.name} adicionado ao carrinho!` };
+    this.lastActionResultSubject.next(result);
+    return of(result);
   }
 
   removeFromCart(productId: number): void {
