@@ -171,9 +171,9 @@
               mat-raised-button 
               color="primary" 
               (click)="finalizePayment()"
-              [disabled]="paymentForm.invalid">
+              [disabled]="paymentForm.invalid || isProcessing">
               <mat-icon>payment</mat-icon>
-              Finalizar Pagamento
+              {{ isProcessing ? 'Processando...' : 'Finalizar Pagamento' }}
             </button>
           </div>
         </mat-step>

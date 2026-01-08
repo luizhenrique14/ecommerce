@@ -9,6 +9,7 @@ const db = require('./adapters/database/pool');
 const UserRepositoryAdapter = require('./adapters/repositories/UserRepository');
 const ProductRepositoryAdapter = require('./adapters/repositories/ProductRepository');
 const CategoryRepositoryAdapter = require('./adapters/repositories/CategoryRepository');
+const OrderRepositoryAdapter = require('./adapters/repositories/OrderRepository');
 const LogRepository = require('./adapters/repositories/LogRepository');
 
 // Services
@@ -31,6 +32,7 @@ const AuthController = require('./presentation/controllers/auth/AuthController')
 const ProductController = require('./presentation/controllers/products/ProductController');
 const CategoryController = require('./presentation/controllers/categories/CategoryController');
 const UserController = require('./presentation/controllers/users/UserController');
+const OrderController = require('./presentation/controllers/orders/OrderController');
 
 // Configuration
 const PORT = process.env.PORT || 3000;
@@ -40,6 +42,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-producti
 const userRepository = new UserRepositoryAdapter();
 const productRepository = new ProductRepositoryAdapter();
 const categoryRepository = new CategoryRepositoryAdapter();
+const orderRepository = new OrderRepositoryAdapter();
 const logRepository = new LogRepository();
 
 // Initialize Logger Service
@@ -62,6 +65,7 @@ const authController = new AuthController(registerUser, loginUser, requestPasswo
 const productController = new ProductController(listProducts, getProduct, createProduct, deleteProduct);
 const categoryController = new CategoryController(listCategories, createCategory);
 const userController = new UserController(userRepository);
+const orderController = new OrderController(orderRepository);
 
 // Middleware
 const app = express();
@@ -120,6 +124,15 @@ app.delete('/api/products/:id', authenticateToken, requireAdmin, (req, res) => p
 
 // User Routes
 app.get('/api/user/profile', authenticateToken, (req, res) => userController.getProfile(req, res));
+
+// Order Routes
+app.post('/api/orders', authenticateToken, (req, res) => orderController.create(req, res));
+app.get('/api/orders', authenticateToken, (req, res) => orderController.getUserOrders(req, res));
+app.get('/api/orders/:orderId', authenticateToken, (req, res) => orderController.getDetails(req, res));
+app.get('/api/orders/track/:trackingCode', (req, res) => orderController.getByTracking(req, res));
+app.put('/api/orders/:orderId/status', authenticateToken, requireAdmin, (req, res) => orderController.updateStatus(req, res));
+app.put('/api/orders/:orderId/tracking', authenticateToken, requireAdmin, (req, res) => orderController.updateTracking(req, res));
+app.get('/api/admin/orders', authenticateToken, requireAdmin, (req, res) => orderController.getAll(req, res));
 
 // Database Initialization
 async function initializeDatabase() {
@@ -204,6 +217,37 @@ async function initializeDatabase() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
+    // Create orders table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS orders (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        user_id INT NOT NULL,
+        total_amount DECIMAL(10, 2) NOT NULL,
+        status ENUM('pending', 'processing', 'shipped', 'delivered', 'cancelled') DEFAULT 'pending',
+        tracking_code VARCHAR(100) UNIQUE,
+        tracking_status VARCHAR(50) DEFAULT 'pending',
+        shipping_address TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+        INDEX idx_tracking_code (tracking_code),
+        INDEX idx_user_id (user_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
+    // Create order_items table
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS order_items (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        order_id INT NOT NULL,
+        product_id INT NOT NULL,
+        quantity INT NOT NULL,
+        unit_price DECIMAL(10, 2) NOT NULL,
+        FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+        FOREIGN KEY (product_id) REFERENCES products(id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+
     // Add columns if they don't exist
     try { await connection.query('ALTER TABLE products ADD COLUMN category_id INT'); } catch (e) {}
     try { await connection.query("ALTER TABLE users ADD COLUMN is_admin TINYINT(1) DEFAULT 0"); } catch (e) {}
@@ -211,6 +255,42 @@ async function initializeDatabase() {
     try { await connection.query('ALTER TABLE products ADD COLUMN stock INT DEFAULT 0'); } catch (e) {}
     try { await connection.query('ALTER TABLE products ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'); } catch (e) {}
     try { await connection.query('ALTER TABLE api_logs ADD COLUMN user_email VARCHAR(255) NULL'); } catch (e) {}
+    
+    // Order table migrations - add missing columns
+    try {
+      await connection.query('ALTER TABLE orders ADD COLUMN total_amount DECIMAL(10, 2) NOT NULL DEFAULT 0 AFTER user_id');
+    } catch (e) {}
+    try {
+      await connection.query('ALTER TABLE orders ADD COLUMN status ENUM(\'pending\', \'processing\', \'shipped\', \'delivered\', \'cancelled\') DEFAULT \'pending\' AFTER total_amount');
+    } catch (e) {}
+    try {
+      await connection.query('ALTER TABLE orders ADD COLUMN tracking_code VARCHAR(100) UNIQUE AFTER status');
+    } catch (e) {}
+    try {
+      await connection.query('ALTER TABLE orders ADD COLUMN tracking_status VARCHAR(50) DEFAULT \'pending\' AFTER tracking_code');
+    } catch (e) {}
+    try {
+      await connection.query('ALTER TABLE orders ADD COLUMN shipping_address TEXT AFTER tracking_status');
+    } catch (e) {}
+    
+    // Add indexes for orders table
+    try { await connection.query('CREATE INDEX idx_orders_tracking ON orders(tracking_code)'); } catch (e) {}
+    try { await connection.query('CREATE INDEX idx_orders_user ON orders(user_id)'); } catch (e) {}
+    
+    // Create order_items table if not exists
+    try {
+      await connection.query(`
+        CREATE TABLE IF NOT EXISTS order_items (
+          id INT AUTO_INCREMENT PRIMARY KEY,
+          order_id INT NOT NULL,
+          product_id INT NOT NULL,
+          quantity INT NOT NULL DEFAULT 1,
+          unit_price DECIMAL(10, 2) NOT NULL DEFAULT 0,
+          FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
+          FOREIGN KEY (product_id) REFERENCES products(id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+      `);
+    } catch (e) {}
 
     // Insert default categories
     const [categories] = await connection.query('SELECT COUNT(*) as count FROM categories');

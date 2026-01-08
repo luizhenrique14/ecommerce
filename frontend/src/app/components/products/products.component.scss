@@ -200,11 +200,62 @@
 
 .products-paginator {
   margin-top: 2rem;
+  background: transparent;
+  box-shadow: none;
+  border-top: 1px solid #e0e0e0;
+  border-radius: 0;
+  padding-top: 1rem;
+  
+  ::ng-deep {
+    .mat-paginator-container {
+      justify-content: center;
+      min-height: auto;
+      padding: 0;
+    }
+    
+    .mat-paginator-page-size-label {
+      color: #666;
+    }
+    
+    .mat-paginator-range-label {
+      color: #333;
+      font-weight: 500;
+      margin: 0 16px;
+    }
+    
+    .mat-paginator-icon {
+      fill: #1976d2;
+    }
+    
+    button.mat-mdc-button {
+      color: #1976d2;
+      border-radius: 4px;
+      padding: 0 8px;
+      min-width: 36px;
+      height: 36px;
+      transition: all 0.2s ease;
+      
+      &:hover:not(:disabled) {
+        background: rgba(25, 118, 210, 0.1);
+      }
+      
+      &:disabled {
+        opacity: 0.4;
+      }
+    }
+    
+    .mat-mdc-form-field-type-mat-select {
+      .mat-mdc-text-field-wrapper {
+        background: #f5f5f5;
+      }
+    }
+  }
 }
 
 @media (max-width: 768px) {
   .products-container {
     padding: 1rem;
+    padding-bottom: 140px;
   }
 
   .products-header {
@@ -220,4 +271,16 @@
     grid-template-columns: 1fr;
     gap: 1rem;
   }
+  
+  .products-paginator {
+    padding: 1rem;
+    
+    ::ng-deep {
+      .mat-paginator-range-actions {
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+    }
+  }
 }
+        

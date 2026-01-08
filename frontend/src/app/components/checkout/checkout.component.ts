@@ -10,9 +10,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatListModule } from '@angular/material/list';
 import { MatDividerModule } from '@angular/material/divider';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { CartService } from '../../services/cart.service';
+import { OrderService } from '../../services/order.service';
 import { CartItem } from '../../models/cart.model';
 import { formatPrice } from '../../shared/utils';
 import { MaskDirective } from './mask.directive';
@@ -31,6 +33,7 @@ import { MaskDirective } from './mask.directive';
     MatStepperModule,
     MatListModule,
     MatDividerModule,
+    MatSnackBarModule,
     MaskDirective
   ],
   templateUrl: './checkout.component.html',
@@ -40,6 +43,7 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   cartItems: CartItem[] = [];
   totalPrice = 0;
   formatPrice = formatPrice;
+  isProcessing = false;
 
   shippingForm: FormGroup;
   paymentForm: FormGroup;
@@ -47,8 +51,10 @@ export class CheckoutComponent implements OnInit, OnDestroy {
 
   constructor(
     private cartService: CartService,
+    private orderService: OrderService,
     private fb: FormBuilder,
-    private router: Router
+    private router: Router,
+    private snackBar: MatSnackBar
   ) {
     const cachedShipping = this.loadCachedFormData<{name?: string; address?: string; city?: string; zipCode?: string; phone?: string}>('checkout_shipping');
     const cachedPayment = this.loadCachedFormData<{cardNumber?: string; cardName?: string; expiryDate?: string; cvv?: string}>('checkout_payment');
@@ -118,14 +124,32 @@ export class CheckoutComponent implements OnInit, OnDestroy {
   }
 
   finalizePayment(): void {
-    if (this.shippingForm.valid && this.paymentForm.valid) {
-      localStorage.removeItem('checkout_shipping');
-      localStorage.removeItem('checkout_payment');
+    if (this.shippingForm.valid && this.paymentForm.valid && this.cartItems.length > 0) {
+      this.isProcessing = true;
+
+      const shippingAddress = `${this.shippingForm.value.address}, ${this.shippingForm.value.city} - ${this.shippingForm.value.zipCode}`;
       
-      setTimeout(() => {
-        this.cartService.clearCart();
-        this.router.navigate(['/success']);
-      }, 1000);
+      const items = this.cartItems.map(item => ({
+        productId: item.id,
+        quantity: item.quantity,
+        unitPrice: item.price
+      }));
+
+      this.orderService.createOrder(items, shippingAddress).subscribe({
+        next: (order) => {
+          this.isProcessing = false;
+          localStorage.removeItem('checkout_shipping');
+          localStorage.removeItem('checkout_payment');
+          this.cartService.clearCart();
+          this.snackBar.open('Pedido realizado com sucesso!', 'Fechar', { duration: 3000 });
+          this.router.navigate(['/orders']);
+        },
+        error: (error) => {
+          this.isProcessing = false;
+          console.error('Erro ao criar pedido:', error);
+          this.snackBar.open('Erro ao processar pedido. Tente novamente.', 'Fechar', { duration: 3000 });
+        }
+      });
     }
   }
 

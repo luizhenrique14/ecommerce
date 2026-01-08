@@ -97,7 +97,23 @@ export class ProductsComponent implements OnInit, OnDestroy {
       .subscribe(params => {
         this.selectedCategory = params['category'] ? parseInt(params['category']) : null;
         this.updateCategoryName();
-        this.page = 1;
+        
+        // Read pagination/sorting from URL
+        this.page = params['page'] ? parseInt(params['page']) : 1;
+        this.pageSize = params['limit'] ? parseInt(params['limit']) : 12;
+        
+        const sortParam = params['sort'];
+        const orderParam = params['order'];
+        if (sortParam && orderParam) {
+          this.sortBy = sortParam;
+          this.sortOrder = orderParam;
+          // Update selectedSort
+          const option = this.sortOptions.find(opt => opt.sort === sortParam && opt.order === orderParam);
+          if (option) {
+            this.selectedSort = option.value;
+          }
+        }
+        
         this.loadProducts();
       });
   }
@@ -150,6 +166,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   onPageChange(event: PageEvent): void {
     this.page = event.pageIndex + 1;
     this.pageSize = event.pageSize;
+    this.updateUrlParams();
     this.loadProducts();
     window.scrollTo(0, 0);
   }
@@ -160,8 +177,32 @@ export class ProductsComponent implements OnInit, OnDestroy {
       this.sortBy = option.sort;
       this.sortOrder = option.order;
       this.page = 1;
+      this.updateUrlParams();
       this.loadProducts();
     }
+  }
+
+  private updateUrlParams(): void {
+    const queryParams: any = {};
+    if (this.selectedCategory) {
+      queryParams.category = this.selectedCategory;
+    }
+    if (this.page > 1) {
+      queryParams.page = this.page;
+    }
+    if (this.pageSize !== 12) {
+      queryParams.limit = this.pageSize;
+    }
+    if (this.sortBy !== 'name' || this.sortOrder !== 'ASC') {
+      queryParams.sort = this.sortBy;
+      queryParams.order = this.sortOrder;
+    }
+    
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: queryParams,
+      queryParamsHandling: 'merge'
+    });
   }
 
   openProductDetail(product: Product): void {

@@ -39,6 +39,8 @@ export class AppComponent implements OnInit, OnDestroy {
     this.showSidenav = url.includes('/products') 
       || url.includes('/checkout') 
       || url.includes('/success') 
-      || url.includes('/admin');
+      || url.includes('/admin')
+      || url.includes('/orders')
+      || url.includes('/order-details');
   }
 }

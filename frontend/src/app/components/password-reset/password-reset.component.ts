@@ -35,6 +35,10 @@ export class PasswordResetComponent {
   successMessage: string = '';
   loading: boolean = false;
   step = 1; // 1 = request, 2 = reset
+  tokenExpirationTime: number = 60; // 60 minutos
+  timeRemaining: string = '';
+  private expirationInterval: any;
+  private expirationMinutes: number = 60;
 
   constructor(
     private fb: FormBuilder,

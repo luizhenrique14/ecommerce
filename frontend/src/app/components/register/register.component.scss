@@ -3,36 +3,15 @@
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, #424242 0%, #212121 100%);
-  padding: 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
 }
 
 .register-card {
   width: 100%;
   max-width: 450px;
   padding: 2rem;
-  background: #2c2c2c;
-  color: #fff;
-}
-
-mat-card-header {
-  margin-bottom: 2rem;
-  text-align: center;
-}
-
-mat-card-title {
-  font-size: 1.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  color: #fff;
-
-  mat-icon {
-    font-size: 2rem;
-    width: 2rem;
-    height: 2rem;
-  }
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 .full-width {
@@ -41,41 +20,53 @@ mat-card-title {
 }
 
 .error-message {
-  color: #f44336;
-  margin-bottom: 1rem;
-  font-size: 0.875rem;
+  background-color: #ffebee;
+  color: #c62828;
+  padding: 12px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  border-left: 4px solid #c62828;
+  font-size: 14px;
+}
+
+mat-card-header {
+  margin-bottom: 2rem;
   text-align: center;
+}
+
+mat-card-title {
+  font-size: 2rem;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+
+  mat-icon {
+    font-size: 2rem;
+    width: 2rem;
+    height: 2rem;
+  }
 }
 
 .login-link {
   margin-top: 1.5rem;
   text-align: center;
-  color: #b0b0b0;
 
-  a {
-    color: #64b5f6;
-    cursor: pointer;
-    text-decoration: none;
-    font-weight: 500;
+  p {
+    margin: 0;
+    color: #666;
+    font-size: 14px;
 
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-}
+    a {
+      color: #667eea;
+      cursor: pointer;
+      text-decoration: none;
+      font-weight: 600;
 
-::ng-deep {
-  .mat-mdc-form-field {
-    .mat-mdc-text-field-wrapper {
-      background-color: #1e1e1e;
-    }
-
-    .mat-mdc-form-field-input-control input {
-      color: #fff;
-    }
-
-    .mat-mdc-form-field-label {
-      color: #b0b0b0;
+      &:hover {
+        text-decoration: underline;
+      }
     }
   }
 }

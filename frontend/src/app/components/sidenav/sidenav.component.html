@@ -11,6 +11,10 @@
         <mat-icon>home</mat-icon>
         <span>Home</span>
       </a>
+      <a mat-list-item (click)="router.navigate(['/orders'])" class="nav-item">
+        <mat-icon>receipt_long</mat-icon>
+        <span>Meus Pedidos</span>
+      </a>
       <mat-divider *ngIf="isAdmin"></mat-divider>
       <h3 mat-subheader *ngIf="isAdmin">Administração</h3>
       <a mat-list-item *ngIf="isAdmin" (click)="router.navigate(['/admin/products'])" class="nav-item admin-link">

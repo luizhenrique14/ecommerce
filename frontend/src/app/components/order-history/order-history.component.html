@@ -1,0 +1,120 @@
+<div class="history-container">
+  <h1>Meus Pedidos</h1>
+
+  <div *ngIf="loading" class="loading">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <div *ngIf="!loading && orders.length === 0" class="no-orders">
+    <mat-icon>shopping_cart</mat-icon>
+    <p>Você ainda não tem nenhum pedido</p>
+  </div>
+
+  <div class="orders-list" *ngIf="!loading && orders.length > 0">
+    <mat-card *ngFor="let order of orders" class="order-card">
+      <mat-card-header>
+        <mat-card-title>
+          <span class="order-id">Pedido #{{ order.id }}</span>
+          <span class="order-status" [style.background-color]="orderService.getStatusColor(order.status)">
+            {{ orderService.getStatusLabel(order.status) }}
+          </span>
+        </mat-card-title>
+        <mat-card-subtitle>
+          {{ order.createdAt | date:'dd/MM/yyyy HH:mm' }}
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="order-info">
+          <div class="tracking-info" *ngIf="order.trackingCode">
+            <mat-icon>local_shipping</mat-icon>
+            <span>Código de Rastreio: <strong>{{ order.trackingCode }}</strong></span>
+          </div>
+          <div class="tracking-status" *ngIf="order.trackingStatus">
+            <mat-icon>update</mat-icon>
+            <span>Status: {{ orderService.getTrackingStatusLabel(order.trackingStatus) }}</span>
+          </div>
+          <div class="total">
+            <strong>Total: R$ {{ order.totalAmount | number:'1.2-2' }}</strong>
+          </div>
+        </div>
+
+        <div class="order-items" *ngIf="order.items && order.items.length > 0">
+          <h4>Produtos:</h4>
+          <div class="items-list">
+            <div class="item" *ngFor="let item of order.items">
+              <img [src]="item.productImage || 'assets/img/images.jpg'" [alt]="item.productName" class="item-image">
+              <div class="item-details">
+                <span class="item-name">{{ item.productName }}</span>
+                <span class="item-qty">Qtd: {{ item.quantity }}</span>
+                <span class="item-price">R$ {{ item.subtotal | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+
+      <mat-card-actions>
+        <button mat-button color="primary" (click)="viewDetails(order)">
+          <mat-icon>visibility</mat-icon>
+          Ver Detalhes
+        </button>
+        <button mat-button color="accent" (click)="trackOrder(order.trackingCode)" *ngIf="order.trackingCode">
+          <mat-icon>location_on</mat-icon>
+          Rastrear
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>
+
+  <div class="track-order-section">
+    <h2>Rastrear Pedido</h2>
+    <p>Digite o código de rastreio para acompanhar seu pedido:</p>
+    <div class="track-form">
+      <mat-form-field appearance="outline">
+        <mat-label>Código de Rastreio</mat-label>
+        <input matInput [(ngModel)]="trackingCode" placeholder="TRK-XXXXXXXX">
+      </mat-form-field>
+      <button mat-raised-button color="primary" (click)="trackByCode()" [disabled]="!trackingCode">
+        <mat-icon>search</mat-icon>
+        Rastrear
+      </button>
+    </div>
+
+    <mat-card *ngIf="trackedOrder" class="tracked-order">
+      <mat-card-header>
+        <mat-card-title>Pedido #{{ trackedOrder.id }}</mat-card-title>
+        <mat-card-subtitle>
+          {{ trackedOrder.createdAt | date:'dd/MM/yyyy HH:mm' }}
+        </mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="tracking-timeline">
+          <div class="timeline-step" [class.active]="isStepActive('pending', trackedOrder.trackingStatus)">
+            <mat-icon>receipt</mat-icon>
+            <span>Pedido Recebido</span>
+          </div>
+          <div class="timeline-step" [class.active]="isStepActive('processing', trackedOrder.trackingStatus)">
+            <mat-icon>inventory_2</mat-icon>
+            <span>Em Processamento</span>
+          </div>
+          <div class="timeline-step" [class.active]="isStepActive('shipped', trackedOrder.trackingStatus)">
+            <mat-icon>local_shipping</mat-icon>
+            <span>Enviado</span>
+          </div>
+          <div class="timeline-step" [class.active]="isStepActive('delivered', trackedOrder.trackingStatus)">
+            <mat-icon>check_circle</mat-icon>
+            <span>Entregue</span>
+          </div>
+        </div>
+        <div class="order-summary">
+          <h4>Resumo do Pedido</h4>
+          <p><strong>Status:</strong> {{ orderService.getStatusLabel(trackedOrder.status) }}</p>
+          <p><strong>Status de Entrega:</strong> {{ orderService.getTrackingStatusLabel(trackedOrder.trackingStatus) }}</p>
+          <p><strong>Total:</strong> R$ {{ trackedOrder.totalAmount | number:'1.2-2' }}</p>
+          <p *ngIf="trackedOrder.shippingAddress"><strong>Endereço:</strong> {{ trackedOrder.shippingAddress }}</p>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
