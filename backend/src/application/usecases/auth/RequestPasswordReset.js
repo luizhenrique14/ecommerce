@@ -4,6 +4,10 @@ const path = require('path');
 const db = require(path.join(__dirname, '..', '..', '..', 'adapters', 'database', 'pool'));
 
 class RequestPasswordReset {
+  constructor(emailService = null) {
+    this.emailService = emailService;
+  }
+
   async execute({ email }) {
     if (!email) {
       return { error: 'Email é obrigatório', status: 400 };
@@ -31,14 +35,22 @@ class RequestPasswordReset {
     );
 
     // Log do link de recuperação (para testes - em produção, enviar email real)
-    const resetLink = `http://localhost:4200/password-reset?email=${encodeURIComponent(email)}&code=${resetToken}`;
+    const resetLink = `http://localhost:4200/reset-password?email=${encodeURIComponent(email)}&code=${resetToken}`;
     console.log('========================================');
     console.log('🔐 LINK DE RECUPERAÇÃO DE SENHA:');
     console.log(resetLink);
     console.log('========================================');
 
+    // Enviar email se o serviço estiver configurado
+    if (this.emailService) {
+      const emailResult = await this.emailService.sendPasswordResetEmail(email, resetToken);
+      if (!emailResult.success) {
+        console.error('Erro ao enviar email:', emailResult.error);
+      }
+    }
+
     return {
-      message: 'Código de recuperação enviado para seu email! (Verifique o console do servidor)',
+      message: 'Código de recuperação enviado para seu email!',
       status: 200
     };
   }

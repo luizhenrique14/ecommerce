@@ -14,6 +14,7 @@ const LogRepository = require('./adapters/repositories/LogRepository');
 
 // Services
 const LoggerService = require('./application/services/LoggerService');
+const EmailService = require('./application/services/EmailService');
 
 // Use Cases
 const RegisterUser = require('./application/usecases/auth/RegisterUser');
@@ -48,10 +49,13 @@ const logRepository = new LogRepository();
 // Initialize Logger Service
 const logger = new LoggerService(logRepository);
 
+// Initialize Email Service (only if SMTP credentials are configured)
+const emailService = (process.env.SMTP_USER && process.env.SMTP_PASS) ? new EmailService() : null;
+
 // Initialize Use Cases
 const registerUser = new RegisterUser(userRepository, JWT_SECRET);
 const loginUser = new LoginUser(userRepository, JWT_SECRET);
-const requestPasswordReset = new RequestPasswordReset();
+const requestPasswordReset = new RequestPasswordReset(emailService);
 const resetPassword = new ResetPassword();
 const listProducts = new ListProducts(productRepository);
 const getProduct = new GetProduct(productRepository);
