@@ -2,15 +2,15 @@ const { logAuth, logCreate } = require('../../../shared/logger');
 
 // Auth Controller
 class AuthController {
-  constructor(registerUser, loginUser, requestPasswordReset, resetPassword) {
-    this.registerUser = registerUser;
-    this.loginUser = loginUser;
-    this.requestPasswordReset = requestPasswordReset;
-    this.resetPassword = resetPassword;
+  constructor(registerUserUseCase, loginUserUseCase, requestPasswordResetUseCase, resetPasswordUseCase) {
+    this._registerUser = registerUserUseCase;
+    this._loginUser = loginUserUseCase;
+    this._requestPasswordReset = requestPasswordResetUseCase;
+    this._resetPassword = resetPasswordUseCase;
   }
 
   async register(req, res) {
-    const result = await this.registerUser.execute(req.body);
+    const result = await this._registerUser.execute(req.body);
     if (result.error) {
       logAuth(req, 'AUTH_REGISTER', false);
       return res.status(result.status).json({ message: result.error });
@@ -27,7 +27,7 @@ class AuthController {
   }
 
   async login(req, res) {
-    const result = await this.loginUser.execute(req.body);
+    const result = await this._loginUser.execute(req.body);
     if (result.error) {
       logAuth(req, 'AUTH_LOGIN', false);
       return res.status(result.status).json({ message: result.error });
@@ -44,7 +44,7 @@ class AuthController {
   }
 
   async requestPasswordReset(req, res) {
-    const result = await this.requestPasswordReset.execute(req.body);
+    const result = await this._requestPasswordReset.execute(req.body);
     if (result.error) {
       logAuth(req, 'AUTH_REQUEST_PASSWORD_RESET', false);
       return res.status(result.status).json({ message: result.error });
@@ -55,7 +55,7 @@ class AuthController {
   }
 
   async resetPassword(req, res) {
-    const result = await this.resetPassword.execute(req.body);
+    const result = await this._resetPassword.execute(req.body);
     if (result.error) {
       logAuth(req, 'AUTH_RESET_PASSWORD', false);
       return res.status(result.status).json({ message: result.error });
